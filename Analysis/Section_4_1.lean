@@ -28,8 +28,12 @@ structure PreInt where
 instance PreInt.instSetoid : Setoid PreInt where
   r a b := a.minuend + b.subtrahend = b.minuend + a.subtrahend
   iseqv := {
-    refl := by sorry
-    symm := by sorry
+    refl := by
+      intro ⟨a, b⟩
+      rw [Nat.add_left_cancel_iff]
+    symm := by
+      intro ⟨a, b⟩ ⟨c, d⟩ h
+      linarith
     trans := by
       -- This proof is written to follow the structure of the original text.
       intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2
@@ -136,7 +140,12 @@ example : 3 = 4 — 1 := by
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
 instance Int.instNeg : Neg Int where
   neg := Quotient.lift (fun ⟨ a, b ⟩ ↦ b — a) (by
-    sorry)
+    intro a b h
+    dsimp
+    rw [Int.eq]
+    whnf at h
+    linarith
+  )
 
 theorem Int.neg_eq (a b:ℕ) : -(a — b) = b — a := rfl
 

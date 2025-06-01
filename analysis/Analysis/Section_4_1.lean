@@ -28,8 +28,12 @@ structure PreInt where
 instance PreInt.instSetoid : Setoid PreInt where
   r a b := a.minuend + b.subtrahend = b.minuend + a.subtrahend
   iseqv := {
-    refl := by sorry
-    symm := by sorry
+    refl := by
+      intro ⟨a, b⟩
+      rw [Nat.add_left_cancel_iff]
+    symm := by
+      intro ⟨a, b⟩ ⟨c, d⟩ h
+      linarith
     trans := by
       -- This proof is written to follow the structure of the original text.
       intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2
@@ -42,6 +46,14 @@ instance PreInt.instSetoid : Setoid PreInt where
         _ = (e + b) + (c + d) := by abel
       exact Nat.add_right_cancel this
     }
+
+def five_minus_three : PreInt := ⟨ 5, 3 ⟩
+def six_minus_four : PreInt := ⟨ 6, 4 ⟩
+def six_minus_three : PreInt := ⟨ 6, 3 ⟩
+example : five_minus_three ≈ six_minus_four := rfl
+
+example (a b : PreInt) : a ≈ b ↔ b ≈ a := by
+  exact eq_comm
 
 @[simp]
 theorem PreInt.eq (a b c d:ℕ) : (⟨ a,b ⟩: PreInt) ≈ ⟨ c,d ⟩ ↔ a + d = c + b := by rfl
@@ -73,11 +85,18 @@ instance Int.instAdd : Add Int where
       _ = (a'+b) + (c'+d) := by rw [h1,h2]
       _ = _ := by abel)
 
-/-- Definition 4.1.2 (Definition of addition) -/
+/-- Note: the operator precedence is parsed as (a —— b) + (c —— d)  -/
 theorem Int.add_eq (a b c d:ℕ) : a —— b + c —— d = (a+c)——(b+d) := Quotient.lift₂_mk _ _ _ _
 
+theorem Int.add_comm : ∀ a b: Int, a + b = b + a := by
+    intro a b
+    obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+    obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+    rw [Int.add_eq, Int.add_eq, eq]
+    omega
+
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
-theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a —— b = a' —— b') : (a*c+b*d) —— (a*d+b*c) = (a'*c+b'*d) —— (a'*d+b'*c) := by
+theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a——b = a'——b') : (a*c+b*d)——(a*d+b*c) = (a'*c+b'*d)——(a'*d+b'*c) := by
   simp only [eq] at h ⊢
   calc
     _ = c*(a+b') + d*(a'+b) := by ring
@@ -139,11 +158,16 @@ example : 3 = 4 —— 1 := by
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
 instance Int.instNeg : Neg Int where
   neg := Quotient.lift (fun ⟨ a, b ⟩ ↦ b —— a) (by
-    sorry)
+    intro a b h
+    dsimp
+    rw [Int.eq]
+    whnf at h
+    linarith
+  )
 
-theorem Int.neg_eq (a b:ℕ) : -(a —— b) = b —— a := rfl
+theorem Int.neg_eq (a b:ℕ) : -(a——b) = b——a := rfl
 
-example : -(3 —— 5) = 5 —— 3 := by rfl
+example : -(3——5) = 5——3 := by rfl
 
 abbrev Int.isPos (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = n
 abbrev Int.isNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
@@ -184,13 +208,41 @@ theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
 
+theorem Int.eq_0' (a b : ℕ) : a = b ↔ a——b = 0 := by
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  constructor
+  intro h
+  rw [h, eq]
+  omega
+  intro h
+  rw [eq] at h
+  omega
+
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddGroup : AddGroup Int :=
-AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
+AddGroup.ofLeftAxioms (by
+  intro a b c
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+  obtain ⟨ c1, c2, rfl ⟩ := eq_diff c
+  rw [Int.add_eq, Int.add_eq, Int.add_eq, Int.add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  rw [add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [neg_eq, add_eq, ← eq_0']
+  omega
+)
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddCommGroup : AddCommGroup Int where
-  add_comm := by sorry
+  add_comm := add_comm
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommMonoid : CommMonoid Int where

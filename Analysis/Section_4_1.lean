@@ -28,8 +28,12 @@ structure PreInt where
 instance PreInt.instSetoid : Setoid PreInt where
   r a b := a.minuend + b.subtrahend = b.minuend + a.subtrahend
   iseqv := {
-    refl := by sorry
-    symm := by sorry
+    refl := by
+      intro ⟨a, b⟩
+      rw [Nat.add_left_cancel_iff]
+    symm := by
+      intro ⟨a, b⟩ ⟨c, d⟩ h
+      linarith
     trans := by
       -- This proof is written to follow the structure of the original text.
       intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2
@@ -43,6 +47,14 @@ instance PreInt.instSetoid : Setoid PreInt where
       exact Nat.add_right_cancel this
     }
 
+def five_minus_three : PreInt := ⟨ 5, 3 ⟩
+def six_minus_four : PreInt := ⟨ 6, 4 ⟩
+def six_minus_three : PreInt := ⟨ 6, 3 ⟩
+example : five_minus_three ≈ six_minus_four := rfl
+
+example (a b : PreInt) : a ≈ b ↔ b ≈ a := by
+  exact eq_comm
+
 @[simp]
 theorem PreInt.eq (a b c d:ℕ) : (⟨ a,b ⟩: PreInt) ≈ ⟨ c,d ⟩ ↔ a + d = c + b := by rfl
 
@@ -50,22 +62,22 @@ abbrev Int := Quotient PreInt.instSetoid
 
 abbrev Int.formalDiff (a b:ℕ)  : Int := Quotient.mk PreInt.instSetoid ⟨ a,b ⟩
 
-infix:100 " — " => Int.formalDiff
+infix:100 " —— " => Int.formalDiff
 
 /-- Definition 4.1.1 (Integers) -/
-theorem Int.eq (a b c d:ℕ): a — b = c — d ↔ a + d = c + b := by
+theorem Int.eq (a b c d:ℕ): a —— b = c —— d ↔ a + d = c + b := by
   constructor
   . exact Quotient.exact
   intro h; exact Quotient.sound h
 
 /-- Definition 4.1.1 (Integers) -/
-theorem Int.eq_diff (n:Int) : ∃ a b, n = a — b := by
+theorem Int.eq_diff (n:Int) : ∃ a b, n = a——b := by
   apply Quot.ind _ n; intro ⟨ a, b ⟩
   use a, b; rfl
 
 /-- Lemma 4.1.3 (Addition well-defined) -/
 instance Int.instAdd : Add Int where
-  add := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a+c) — (b+d) ) (by
+  add := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a+c) —— (b+d) ) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp [Setoid.r] at *
     calc
@@ -73,8 +85,18 @@ instance Int.instAdd : Add Int where
       _ = (a'+b) + (c'+d) := by rw [h1,h2]
       _ = _ := by abel)
 
+/-- Note: the operator precedence is parsed as (a —— b) + (c —— d)  -/
+theorem Int.add_eq (a b c d:ℕ) : a —— b + c —— d = (a+c)——(b+d) := Quotient.lift₂_mk _ _ _ _
+
+theorem Int.add_comm : ∀ a b: Int, a + b = b + a := by
+    intro a b
+    obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+    obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+    rw [Int.add_eq, Int.add_eq, eq]
+    omega
+
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
-theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a — b = a' — b') : (a*c+b*d) — (a*d+b*c) = (a'*c+b'*d) — (a'*d+b'*c) := by
+theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a——b = a'——b') : (a*c+b*d)——(a*d+b*c) = (a'*c+b'*d)——(a'*d+b'*c) := by
   simp only [eq] at h ⊢
   calc
     _ = c*(a+b') + d*(a'+b) := by ring
@@ -82,7 +104,7 @@ theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a — b = a' — b') : (a*c
     _ = _ := by ring
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
-theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c — d = c' — d') : (a*c+b*d) — (a*d+b*c) = (a*c'+b*d') — (a*d'+b*c') := by
+theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c——d = c'——d') : (a*c+b*d)——(a*d+b*c) = (a*c'+b*d')——(a*d'+b*c') := by
   simp only [eq] at h ⊢
   calc
     _ = a*(c+d') + b*(c'+d) := by ring
@@ -90,29 +112,29 @@ theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c — d = c' — d') : (a*
     _ = _ := by ring
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
-theorem Int.mul_congr {a b c d a' b' c' d' : ℕ} (h1: a — b = a' — b') (h2: c — d = c' — d') :
-  (a*c+b*d) — (a*d+b*c) = (a'*c'+b'*d') — (a'*d'+b'*c') := by
+theorem Int.mul_congr {a b c d a' b' c' d' : ℕ} (h1: a——b = a'——b') (h2: c——d = c'——d') :
+  (a*c+b*d)——(a*d+b*c) = (a'*c'+b'*d')——(a'*d'+b'*c') := by
   rw [mul_congr_left a b a' b' c d h1, mul_congr_right a' b' c d c' d' h2]
 
 instance Int.instMul : Mul Int where
-  mul := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a * c + b * d) — (a * d + b * c)) (by
+  mul := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a * c + b * d)——(a * d + b * c)) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp at h1 h2
     convert mul_congr _ _ <;> simpa
     )
 
 /-- Definition 4.1.2 (Multiplication of integers) -/
-theorem Int.mul_eq (a b c d:ℕ) : a — b * c — d = (a*c+b*d) — (a*d+b*c) := Quotient.lift₂_mk _ _ _ _
+theorem Int.mul_eq (a b c d:ℕ) : a —— b * c —— d = (a*c+b*d) —— (a*d+b*c) := Quotient.lift₂_mk _ _ _ _
 
 instance Int.instOfNat {n:ℕ} : OfNat Int n where
-  ofNat := n — 0
+  ofNat := n —— 0
 
 instance Int.instNatCast : NatCast Int where
-  natCast n := n — 0
+  natCast n := n —— 0
 
-theorem Int.ofNat_eq (n:ℕ) : ofNat(n) = n — 0 := rfl
+theorem Int.ofNat_eq (n:ℕ) : ofNat(n) = n —— 0 := rfl
 
-theorem Int.natCast_eq (n:ℕ) : (n:Int) = n — 0 := rfl
+theorem Int.natCast_eq (n:ℕ) : (n:Int) = n —— 0 := rfl
 
 @[simp]
 theorem Int.natCast_ofNat (n:ℕ) : ((ofNat(n):ℕ): Int) = ofNat(n) := by rfl
@@ -128,19 +150,24 @@ theorem Int.natCast_inj (n m:ℕ) :
     (n : Int) = (m : Int) ↔ n = m := by
       simp only [natCast_eq, eq, add_zero]
 
-example : 3 = 3 — 0 := by rfl
+example : 3 = 3 —— 0 := by rfl
 
-example : 3 = 4 — 1 := by
+example : 3 = 4 —— 1 := by
   rw [Int.ofNat_eq, Int.eq]
 
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
 instance Int.instNeg : Neg Int where
-  neg := Quotient.lift (fun ⟨ a, b ⟩ ↦ b — a) (by
-    sorry)
+  neg := Quotient.lift (fun ⟨ a, b ⟩ ↦ b —— a) (by
+    intro a b h
+    dsimp
+    rw [Int.eq]
+    whnf at h
+    linarith
+  )
 
-theorem Int.neg_eq (a b:ℕ) : -(a — b) = b — a := rfl
+theorem Int.neg_eq (a b:ℕ) : -(a——b) = b——a := rfl
 
-example : -(3 — 5) = 5 — 3 := by rfl
+example : -(3——5) = 5——3 := by rfl
 
 abbrev Int.isPos (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = n
 abbrev Int.isNeg (x:Int) : Prop := ∃ (n:ℕ), n > 0 ∧ x = -n
@@ -181,13 +208,41 @@ theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
 
+theorem Int.eq_0' (a b : ℕ) : a = b ↔ a——b = 0 := by
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  constructor
+  intro h
+  rw [h, eq]
+  omega
+  intro h
+  rw [eq] at h
+  omega
+
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddGroup : AddGroup Int :=
-AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
+AddGroup.ofLeftAxioms (by
+  intro a b c
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+  obtain ⟨ c1, c2, rfl ⟩ := eq_diff c
+  rw [Int.add_eq, Int.add_eq, Int.add_eq, Int.add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  rw [add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [neg_eq, add_eq, ← eq_0']
+  omega
+)
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddCommGroup : AddCommGroup Int where
-  add_comm := by sorry
+  add_comm := add_comm
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommMonoid : CommMonoid Int where
@@ -215,7 +270,7 @@ instance Int.instCommRing : CommRing Int where
 /-- Definition of subtraction -/
 theorem Int.sub_eq (a b:Int) : a - b = a + (-b) := by rfl
 
-theorem Int.sub_eq_formal_sub (a b:ℕ) : (a:Int) - (b:Int) = a — b := by sorry
+theorem Int.sub_eq_formal_sub (a b:ℕ) : (a:Int) - (b:Int) = a——b := by sorry
 
 /-- Proposition 4.1.8 (No zero divisors) / Exercise 4.1.5 -/
 theorem Int.mul_eq_zero {a b:Int} (h: a * b = 0) : a = 0 ∨ b = 0 := by sorry

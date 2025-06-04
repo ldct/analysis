@@ -208,10 +208,37 @@ theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
 
+theorem Int.eq_0' (a b : ℕ) : a = b ↔ a——b = 0 := by
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  constructor
+  intro h
+  rw [h, eq]
+  omega
+  intro h
+  rw [eq] at h
+  omega
+
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddGroup : AddGroup Int :=
-AddGroup.ofLeftAxioms (by sorry
-) (by sorry) (by sorry)
+AddGroup.ofLeftAxioms (by
+  intro a b c
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+  obtain ⟨ c1, c2, rfl ⟩ := eq_diff c
+  rw [Int.add_eq, Int.add_eq, Int.add_eq, Int.add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  rw [add_eq, eq]
+  omega
+) (by
+  intro a
+  obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+  rw [neg_eq, add_eq, ← eq_0']
+  omega
+)
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddCommGroup : AddCommGroup Int where

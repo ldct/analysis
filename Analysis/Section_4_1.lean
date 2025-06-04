@@ -47,6 +47,14 @@ instance PreInt.instSetoid : Setoid PreInt where
       exact Nat.add_right_cancel this
     }
 
+def five_minus_three : PreInt := ⟨ 5, 3 ⟩
+def six_minus_four : PreInt := ⟨ 6, 4 ⟩
+def six_minus_three : PreInt := ⟨ 6, 3 ⟩
+example : five_minus_three ≈ six_minus_four := rfl
+
+example (a b : PreInt) : a ≈ b ↔ b ≈ a := by
+  exact eq_comm
+
 @[simp]
 theorem PreInt.eq (a b c d:ℕ) : (⟨ a,b ⟩: PreInt) ≈ ⟨ c,d ⟩ ↔ a + d = c + b := by rfl
 
@@ -57,7 +65,7 @@ abbrev Int.formalDiff (a b:ℕ)  : Int := Quotient.mk PreInt.instSetoid ⟨ a,b 
 infix:100 " —— " => Int.formalDiff
 
 /-- Definition 4.1.1 (Integers) -/
-theorem Int.eq (a b c d:ℕ): a——b = c——d ↔ a + d = c + b := by
+theorem Int.eq (a b c d:ℕ): a —— b = c —— d ↔ a + d = c + b := by
   constructor
   . exact Quotient.exact
   intro h; exact Quotient.sound h
@@ -76,6 +84,16 @@ instance Int.instAdd : Add Int where
       _ = (a+b') + (c+d') := by abel
       _ = (a'+b) + (c'+d) := by rw [h1,h2]
       _ = _ := by abel)
+
+/-- Note: the operator precedence is parsed as (a —— b) + (c —— d)  -/
+theorem Int.add_eq (a b c d:ℕ) : a —— b + c —— d = (a+c)——(b+d) := Quotient.lift₂_mk _ _ _ _
+
+theorem Int.add_comm : ∀ a b: Int, a + b = b + a := by
+    intro a b
+    obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
+    obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
+    rw [Int.add_eq, Int.add_eq, eq]
+    omega
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a——b = a'——b') : (a*c+b*d)——(a*d+b*c) = (a'*c+b'*d)——(a'*d+b'*c) := by
@@ -197,7 +215,9 @@ AddGroup.ofLeftAxioms (by sorry
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddCommGroup : AddCommGroup Int where
-  add_comm := by sorry
+  add_comm := by
+    intro a b
+    exact add_comm a b
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommMonoid : CommMonoid Int where

@@ -242,9 +242,7 @@ AddGroup.ofLeftAxioms (by
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddCommGroup : AddCommGroup Int where
-  add_comm := by
-    intro a b
-    exact add_comm a b
+  add_comm := add_comm
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommMonoid : CommMonoid Int where

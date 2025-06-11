@@ -172,12 +172,23 @@ lemma Nat.mul_cancel_right {a b c: Nat} (h: a * c = b * c) (hc: c.isPos) : a = b
   replace hgt := ne_of_gt _ _ hgt
   contradiction
 
+lemma Nat.mul_le_mul_of_nonneg_left {a b c: Nat} (h1: a ≤ b) : c * a ≤ c * b := by
+    rcases h1 with ⟨ d, hd ⟩
+    use c * d
+    rw [hd, mul_add]
+
 /-- (Not from textbook) Nat is an ordered semiring. -/
 instance Nat.isOrderedRing : IsOrderedRing Nat where
-  zero_le_one := by sorry
-  mul_le_mul_of_nonneg_left := by sorry
-  mul_le_mul_of_nonneg_right := by sorry
-
+  zero_le_one := by
+    use 1
+    rfl
+  mul_le_mul_of_nonneg_left := by
+    intro a b c h1 _
+    exact mul_le_mul_of_nonneg_left h1
+  mul_le_mul_of_nonneg_right := by
+    intro a b c h1 _
+    rw [mul_comm a c, mul_comm b c]
+    exact mul_le_mul_of_nonneg_left h1
 
 lemma zero_le (n : Nat) : (0 : Nat) ≤ n := by
   use n

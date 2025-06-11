@@ -1,6 +1,8 @@
 import Mathlib.Tactic
 import Mathlib.Algebra.Group.MinimalAxioms
 
+import Plausible
+
 /-!
 # Analysis I, Section 4.1
 
@@ -65,6 +67,7 @@ abbrev Int.formalDiff (a b:ℕ)  : Int := Quotient.mk PreInt.instSetoid ⟨ a,b 
 infix:100 " —— " => Int.formalDiff
 
 /-- Definition 4.1.1 (Integers) -/
+@[simp high]
 theorem Int.eq (a b c d:ℕ): a —— b = c —— d ↔ a + d = c + b := by
   constructor
   . exact Quotient.exact
@@ -80,24 +83,23 @@ instance Int.instAdd : Add Int where
   add := Quotient.lift₂ (fun ⟨ a, b ⟩ ⟨ c, d ⟩ ↦ (a+c) —— (b+d) ) (by
     intro ⟨ a, b ⟩ ⟨ c, d ⟩ ⟨ a', b' ⟩ ⟨ c', d' ⟩ h1 h2
     simp [Setoid.r] at *
-    calc
-      _ = (a+b') + (c+d') := by abel
-      _ = (a'+b) + (c'+d) := by rw [h1,h2]
-      _ = _ := by abel)
+    omega
+)
 
 /-- Note: the operator precedence is parsed as (a —— b) + (c —— d)  -/
+@[simp]
 theorem Int.add_eq (a b c d:ℕ) : a —— b + c —— d = (a+c)——(b+d) := Quotient.lift₂_mk _ _ _ _
 
 theorem Int.add_comm : ∀ a b: Int, a + b = b + a := by
     intro a b
     obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
     obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
-    rw [Int.add_eq, Int.add_eq, eq]
+    simp
     omega
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a——b = a'——b') : (a*c+b*d)——(a*d+b*c) = (a'*c+b'*d)——(a'*d+b'*c) := by
-  simp only [eq] at h ⊢
+  simp at *
   calc
     _ = c*(a+b') + d*(a'+b) := by ring
     _ = c*(a'+b) + d*(a+b') := by rw [h]
@@ -105,7 +107,7 @@ theorem Int.mul_congr_left (a b a' b' c d : ℕ) (h: a——b = a'——b') : (a
 
 /-- Lemma 4.1.3 (Multiplication well-defined) -/
 theorem Int.mul_congr_right (a b c d c' d' : ℕ) (h: c —— d = c' —— d') : (a*c+b*d) —— (a*d+b*c) = (a*c'+b*d') —— (a*d'+b*c') := by
-  simp only [eq] at h ⊢
+  simp at *
   calc
     _ = a*(c+d') + b*(c'+d) := by ring
     _ = a*(c'+d) + b*(c+d') := by rw [h]
@@ -124,6 +126,7 @@ instance Int.instMul : Mul Int where
     )
 
 /-- Definition 4.1.2 (Multiplication of integers) -/
+@[simp]
 theorem Int.mul_eq (a b c d:ℕ) : a —— b * c —— d = (a*c+b*d) —— (a*d+b*c) := Quotient.lift₂_mk _ _ _ _
 
 instance Int.instOfNat {n:ℕ} : OfNat Int n where
@@ -165,6 +168,7 @@ instance Int.instNeg : Neg Int where
     linarith
   )
 
+@[simp]
 theorem Int.neg_eq (a b:ℕ) : -(a——b) = b——a := rfl
 
 example : -(3——5) = 5——3 := by rfl
@@ -208,14 +212,15 @@ theorem Int.not_pos_neg (x:Int) : x.isPos ∧ x.isNeg → False := by
   simp_rw [natCast_eq, neg_eq, eq] at hm'
   linarith
 
-theorem Int.eq_0' (a b : ℕ) : a = b ↔ a——b = 0 := by
+@[simp]
+theorem Int.eq_0' (a b : ℕ) : a——b = 0 ↔ a = b := by
   rw [show (0 : Int) = 0 —— 0 by rfl]
   constructor
   intro h
-  rw [h, eq]
+  simp at h
   omega
   intro h
-  rw [eq] at h
+  rw [h, eq]
   omega
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
@@ -225,18 +230,17 @@ AddGroup.ofLeftAxioms (by
   obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
   obtain ⟨ b1, b2, rfl ⟩ := eq_diff b
   obtain ⟨ c1, c2, rfl ⟩ := eq_diff c
-  rw [Int.add_eq, Int.add_eq, Int.add_eq, Int.add_eq, eq]
+  simp
   omega
 ) (by
   intro a
   obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
   rw [show (0 : Int) = 0 —— 0 by rfl]
-  rw [add_eq, eq]
-  omega
+  simp
 ) (by
   intro a
   obtain ⟨ a1, a2, rfl ⟩ := eq_diff a
-  rw [neg_eq, add_eq, ← eq_0']
+  simp
   omega
 )
 
@@ -244,39 +248,137 @@ AddGroup.ofLeftAxioms (by
 instance Int.instAddCommGroup : AddCommGroup Int where
   add_comm := add_comm
 
+
+lemma Int.mul_comm (x y : Int) : x * y = y * x := by
+  obtain ⟨ a, b, rfl ⟩ := eq_diff x
+  obtain ⟨ c, d, rfl ⟩ := eq_diff y
+  simp
+  ring
+
+lemma Int.one_mul (x : Int) : 1 * x = x := by
+  obtain ⟨ a, b, rfl ⟩ := eq_diff x
+  rw [show (1 : Int) = 1 —— 0 by rfl]
+  simp
+
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommMonoid : CommMonoid Int where
-  mul_comm := by sorry
+  mul_comm := by
+    intro x y
+    exact mul_comm x y
   mul_assoc := by
-    -- This proof is written to follow the structure of the original text.
     intro x y z
     obtain ⟨ a, b, rfl ⟩ := eq_diff x
     obtain ⟨ c, d, rfl ⟩ := eq_diff y
     obtain ⟨ e, f, rfl ⟩ := eq_diff z
-    simp_rw [mul_eq]
-    congr 1
-    . ring
+    simp
     ring
-  one_mul := by sorry
-  mul_one := by sorry
+  one_mul := by
+    intro a
+    exact one_mul a
+  mul_one := by
+    intro a
+    rw [mul_comm]
+    exact one_mul a
+
+lemma Int.zero_mul (x : Int) : 0 * x = 0 := by
+  obtain ⟨ a, b, rfl ⟩ := eq_diff x
+  rw [show (0 : Int) = 0 —— 0 by rfl]
+  simp
+
+lemma Int.left_distrib (x y z : Int) : x * (y + z) = x * y + x * z := by
+  obtain ⟨ a, b, rfl ⟩ := eq_diff x
+  obtain ⟨ c, d, rfl ⟩ := eq_diff y
+  obtain ⟨ e, f, rfl ⟩ := eq_diff z
+  simp only [mul_eq, add_eq, eq]
+  ring
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instCommRing : CommRing Int where
-  left_distrib := by sorry
-  right_distrib := by sorry
-  zero_mul := by sorry
-  mul_zero := by sorry
+  left_distrib := by
+    intro a b c
+    exact left_distrib a b c
+  right_distrib := by
+    intro x y z
+    simp only [mul_comm, left_distrib]
+  zero_mul := zero_mul
+  mul_zero := by
+    intro a
+    rw [mul_comm]
+    exact zero_mul a
 
 /-- Definition of subtraction -/
 theorem Int.sub_eq (a b:Int) : a - b = a + (-b) := by rfl
 
-theorem Int.sub_eq_formal_sub (a b:ℕ) : (a:Int) - (b:Int) = a —— b := by sorry
+theorem Int.sub_eq_formal_sub (a b:ℕ) : (a:Int) - (b:Int) = a - b := by
+  obtain ⟨ x, y, h1 ⟩ := eq_diff a
+  obtain ⟨ p, q, h2 ⟩ := eq_diff b
+  rw [h1, h2]
+
+-- a rearrangement-type inequality on ℕ
+lemma test (x y p q : ℕ)
+(h : x * p + y * q = x * q + y * p) : x = y ∨ p = q := by
+  by_cases h2 : p ≤ q
+  · -- Case where p ≤ q
+    have h3 : q = p + (q - p) := by omega
+    rw [h3] at h
+    have eq3 : y * (q - p) = x * (q - p) := by
+      nlinarith
+    by_cases h4 : 0 < (q - p)
+    · -- Case where (q - p) > 0
+      have h5 : y = x := by
+        apply (mul_left_inj' (show (q - p : ℕ) ≠ 0 by omega)).mp
+        omega
+      left
+      omega
+    · -- Case where (q - p) ≤ 0
+      have h7 : p = q := by omega
+      right
+      exact h7
+  · -- Case where p > q
+    have h5 : p = q + (p - q) := by omega
+    rw [h5] at h
+    have eq2 : x * (q + (p - q)) + y * q = x * q + y * (q + (p - q)) := by linarith
+    have eq3 : x * (p - q) = y * (p - q) := by
+      nlinarith
+    by_cases h6 : (p - q) > 0
+    · -- Case where (p - q) > 0
+      have h7 : x = y := by
+        apply (mul_left_inj' (show (p - q : ℕ) ≠ 0 by omega)).mp
+        omega
+      left
+      omega
+    · -- Case where (p - q) ≤ 0
+      exfalso
+      have h7 : p - q = 0 := by omega
+      have h8 : p ≤ q := by omega
+      linarith
 
 /-- Proposition 4.1.8 (No zero divisors) / Exercise 4.1.5 -/
-theorem Int.mul_eq_zero {a b:Int} (h: a * b = 0) : a = 0 ∨ b = 0 := by sorry
+theorem Int.mul_eq_zero {a b:Int} (h: a * b = 0) : a = 0 ∨ b = 0 := by
+  obtain ⟨ x, y, h1 ⟩ := eq_diff a
+  obtain ⟨ p, q, h2 ⟩ := eq_diff b
+  rw [h1, h2, mul_eq] at h
+  rw [show (0 : Int) = 0 —— 0 by rfl] at h
+  simp at h
+  rw [h1, h2]
+  simp
+  clear h1 h2
+  exact test x y p q h
 
-/-- Corollary 4.1.9 (Cancellation law) / Exercise 4.1.6 -/
-theorem Int.mul_right_cancel₀ (a b c:Int) (h: a*c = b*c) (hc: c ≠ 0) : a = b := by sorry
+
+/- Corollary 4.1.9 (Cancellation law) / Exercise 4.1.6 -/
+theorem Int.mul_right_cancel₀ (a b c:Int) (h: a*c = b*c) (hc: c ≠ 0) : a = b := by
+  have : a * c - b * c = b * c - b * c := by congr
+  simp at this
+  have : (a - b) * c = 0 := by
+    ring_nf
+    exact this
+  have := mul_eq_zero this
+  rcases this with h | h
+  have : (a - b) + b = 0 + b := by congr
+  ring_nf at this
+  exact this
+  trivial
 
 /-- Definition 4.1.10 (Ordering of the integers) -/
 instance Int.instLE : LE Int where
@@ -290,17 +392,80 @@ theorem Int.le_iff (n m:Int) : n ≤ m ↔ ∃ a:ℕ, m = n + a := by rfl
 
 theorem Int.lt_iff (n m:Int): n < m ↔ (∃ a:ℕ, m = n + a) ∧ n ≠ m := by rfl
 
+lemma Int.test (n m : Int) : n < m → m > n := by
+  intro h
+  exact h
+
 /-- Lemma 4.1.11(a) (Properties of order) / Exercise 4.1.7 -/
-theorem Int.gt_iff (a b:Int) : a > b ↔ ∃ n:ℕ, n ≠ 0 ∧ a = b + n := by sorry
+theorem Int.gt_iff (a b:Int) : a > b ↔ ∃ n:ℕ, n ≠ 0 ∧ a = b + n := by
+  rw [show a > b ↔ b < a by rfl]
+  constructor
+  intro h
+  rw [lt_iff] at h
+  rcases h.1 with ⟨ c, hc ⟩
+  use c
+  constructor
+  intro h2
+  rw [h2] at hc
+  simp at hc
+  have h3 := h.2.symm
+  exact h3 hc
+  exact hc
+  intro h
+  rcases h with ⟨ n, ⟨h1, h2⟩  ⟩
+  rw [lt_iff]
+  constructor
+  use n
+  intro h
+  rw [h] at h2
+  simp at h2
+  rw [natCast_eq] at h2
+  simp at h2
+  exact h1 h2
 
 /-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
-theorem Int.add_gt_add_right {a b:Int} (c:Int) (h: a > b) : a+c > b+c := by sorry
+theorem Int.add_gt_add_right {a b:Int} (c:Int) (h: a > b) : a+c > b+c := by
+  rw [gt_iff] at *
+  rcases h with ⟨ n, hn ⟩
+  use n
+  constructor
+  exact hn.left
+  have hn := hn.right
+  rw [hn]
+  ring
 
 /-- Lemma 4.1.11(c) (Positive multiplication preserves order) / Exercise 4.1.7 -/
-theorem Int.mul_lt_mul_of_pos_left {a b c:Int} (hab : a > b) (hc: c > 0) : a*c > b*c := by sorry
+theorem Int.mul_lt_mul_of_pos_left {a b c:Int} (hab : a > b) (hc: c > 0) : a*c > b*c := by
+  rw [gt_iff] at *
+  rcases hab with ⟨ n, ⟨hn1, hn2⟩⟩
+  rcases hc with ⟨ m, ⟨hm1, hm2⟩⟩
+  use n * m
+  constructor
+  positivity
+  rw [hn2, hm2]
+  simp
+  ring
 
 /-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
-theorem Int.neg_gt_neg {a b:Int} (h: a > b) : -a < -b := by sorry
+theorem Int.neg_gt_neg {a b:Int} (h: a > b) : -a < -b := by
+  rw [gt_iff] at *
+  rcases h with ⟨ n, ⟨hn1, hn2⟩⟩
+  rw [lt_iff]
+  constructor
+  use n
+  rw [hn2]
+  ring
+  rw [hn2]
+  intro h
+  ring_nf at h
+  have h' : (-b - ↑n) + b = -b + b := by
+    rw [h]
+  rw [show  -(b : Int) + b = 0 by ring] at h'
+  rw [show -(b : Int) - n + b = -n by ring] at h'
+  simp at h'
+  rw [natCast_eq] at h'
+  simp at h'
+  exact hn1 h'
 
 /-- Lemma 4.1.11(e) (Order is transitive) / Exercise 4.1.7 -/
 theorem Int.gt_trans {a b c:Int} (hab: a > b) (hbc: b > c) : a > c := by sorry

@@ -468,7 +468,15 @@ theorem Int.neg_gt_neg {a b:Int} (h: a > b) : -a < -b := by
   exact hn1 h'
 
 /-- Lemma 4.1.11(e) (Order is transitive) / Exercise 4.1.7 -/
-theorem Int.gt_trans {a b c:Int} (hab: a > b) (hbc: b > c) : a > c := by sorry
+theorem Int.gt_trans {a b c:Int} (hab: a > b) (hbc: b > c) : a > c := by
+  rw [gt_iff] at *
+  rcases hab with ⟨ n, ⟨hn1, hn2⟩⟩
+  rcases hbc with ⟨ m, ⟨hm1, hm2⟩⟩
+  use n + m
+  constructor
+  positivity
+  simp [hn2, hm2]
+  ring
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.trichotomous' (a b c:Int) : a > b ∨ a < b ∨ a = b := by sorry
@@ -488,8 +496,17 @@ instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := b
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
 instance Int.instLinearOrder : LinearOrder Int where
-  le_refl := sorry
-  le_trans := sorry
+  le_refl := by
+    intro a
+    use 0
+    simp
+  le_trans := by
+    intro a b c hab hbc
+    rcases hab with ⟨ n, ⟨hn1, hn2⟩⟩
+    rcases hbc with ⟨ m, ⟨hm1, hm2⟩⟩
+    use n + m
+    simp
+    ring
   lt_iff_le_not_le := sorry
   le_antisymm := sorry
   le_total := sorry

@@ -582,13 +582,6 @@ instance Int.instLinearOrder : LinearOrder Int where
   le_total := sorry
   toDecidableLE := decidableRel
 
-
--- instance Int.instLinearOrder : LinearOrder Int where
---   le_refl := by
---     intro a
---     use 0
---     simp
-
 /-- Exercise 4.1.3 -/
 theorem Int.neg_one_mul (a:Int) : -1 * a = -a := by
   rw [show (-1 : Int) = 0 - 1 by rfl]
@@ -616,27 +609,34 @@ theorem Int.no_induction : ∃ P: Int → Prop, P 0 ∧ ∀ n, P n → P (n+1) �
   have := le_antisymm h this
   simp at this
 
-
+lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by
+  rw [show 0 = 0 * n by simp]
+  exact mul_le_mul_of_nonneg_left h h
 
 /-- Exercise 4.1.9 -/
-theorem Int.sq_nonneg (n:Int) : n*n ≥ 0 := by
+theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by
   have trichotemy_zero := Int.trichotomous' n 0
   cases' trichotemy_zero with h1 h2
-  rw [show 0 = 0 * n by simp]
-  have h1' := le_of_lt h1
-  exact mul_le_mul_of_nonneg_left h1' h1'
+  apply Int.sq_nonneg_of_pos
+  exact le_of_lt h1
   cases' h2 with h2 h3
-  rw [show 0 = 0 * n by simp]
   have h3 : -n > -0 := by exact neg_gt_neg h2
   simp at h3
-  sorry
+  have h4 : 0 ≤ -n := le_of_lt h3
+  have h5 := sq_nonneg_of_pos _ h4
+  simp at h5
+  exact h5
   rw [h3]
   simp
 
-
-
 /-- Exercise 4.1.9 -/
-theorem Int.sq_nonneg' (n:Int) : ∃ (m:Nat), n*n = m := by sorry
+theorem Int.sq_nonneg' (n:Int) : ∃ (m:Nat), n*n = m := by
+  have := sq_nonneg n
+  rw [le_iff] at this
+  rcases this with ⟨ m, hm ⟩
+  use m
+  rw [hm]
+  simp
 
 /-- Not in textbook: create an equivalence between Int and ℤ.  This requires some familiarity with the API for Mathlib's version of the integers. -/
 abbrev Int.equivInt : Int ≃ ℤ where

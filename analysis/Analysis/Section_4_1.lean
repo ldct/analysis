@@ -175,7 +175,13 @@ theorem Int.natCast_inj (n m:ℕ) :
     (n : Int) = (m : Int) ↔ n = m := by
       simp only [natCast_eq, eq, add_zero]
 
-theorem Int.eq_0_of_cast_eq_0 (n : Nat) : (n : Int) = 0 ↔ n = 0 := by
+example : 3 = 3 —— 0 := by rfl
+
+example : 3 = 4 —— 1 := by
+  rw [Int.ofNat_eq, Int.eq]
+
+/-- (Not from textbook) 0 is the only natural whose cast is 0 -/
+lemma Int.cast_eq_0_iff_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by
   constructor
   intro h
   rw [show (0 : Int) = ((0 : Nat) : Int) by rfl] at h
@@ -185,13 +191,6 @@ theorem Int.eq_0_of_cast_eq_0 (n : Nat) : (n : Int) = 0 ↔ n = 0 := by
   rw [h]
   simp
 
-example : 3 = 3 —— 0 := by rfl
-
-example : 3 = 4 —— 1 := by
-  rw [Int.ofNat_eq, Int.eq]
-
-/-- (Not from textbook) 0 is the only natural whose cast is 0 -/
-lemma Int.cast_eq_0_iff_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by sorry
 
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
 instance : Neg Int where
@@ -428,23 +427,6 @@ theorem Int.le_iff (a b:Int) : a ≤ b ↔ ∃ t:ℕ, b = a + t := by rfl
 theorem Int.lt_iff (a b:Int): a < b ↔ (∃ t:ℕ, b = a + t) ∧ a ≠ b := by rfl
 
 /-- Lemma 4.1.11(a) (Properties of order) / Exercise 4.1.7 -/
-theorem Int.lt_iff_exists_positive_difference (a b:Int) : a < b ↔ ∃ n:ℕ, n ≠ 0 ∧ b = a + n := by sorry
-
-/-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
-theorem Int.add_lt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by sorry
-
-/-- Lemma 4.1.11(c) (Positive multiplication preserves order) / Exercise 4.1.7 -/
-theorem Int.mul_lt_mul_of_pos_right {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c < b*c := by sorry
-
-/-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
-theorem Int.neg_gt_neg {a b:Int} (h: b < a) : -a < -b := by sorry
-
-/-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
-theorem Int.neg_ge_neg {a b:Int} (h: b ≤ a) : -a ≤ -b := by sorry
-
-/-- Lemma 4.1.11(e) (Order is transitive) / Exercise 4.1.7 -/
-theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by sorry
-
 theorem Int.lt_iff_exists_positive_difference (a b:Int) : a < b ↔ ∃ n:ℕ, n ≠ 0 ∧ b = a + n := by
   constructor
   intro h
@@ -471,17 +453,6 @@ theorem Int.lt_iff_exists_positive_difference (a b:Int) : a < b ↔ ∃ n:ℕ, n
   exact h1 h2
 
 /-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
-theorem Int.add_gt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
-  rw [lt_iff_exists_positive_difference] at *
-  rcases h with ⟨ n, hn ⟩
-  use n
-  constructor
-  exact hn.left
-  have hn := hn.right
-  rw [hn]
-  ring
-
-/-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
 theorem Int.add_lt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
   rw [lt_iff] at *
   rcases h with ⟨ h1, h2⟩
@@ -497,7 +468,7 @@ theorem Int.add_lt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
   exact h2 this
 
 /-- Lemma 4.1.11(c) (Positive multiplication preserves order) / Exercise 4.1.7 -/
-theorem Int.mul_lt_mul_of_pos_left {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c < b*c := by
+theorem Int.mul_lt_mul_of_pos_right {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c < b*c := by
   rw [lt_iff_exists_positive_difference] at *
   rcases hab with ⟨ n, ⟨hn1, hn2⟩⟩
   rcases hc with ⟨ m, ⟨hm1, hm2⟩⟩
@@ -507,9 +478,6 @@ theorem Int.mul_lt_mul_of_pos_left {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c <
   rw [hn2, hm2]
   simp
   ring
-
-theorem Int.mul_le_mul_of_nonneg_left {a b c:Int} (hab : a ≥ b) (hc: c ≥ 0) : a*c ≥ b*c := by
-  sorry
 
 /-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
 theorem Int.neg_gt_neg {a b:Int} (h: b < a) : -a < -b := by
@@ -532,7 +500,8 @@ theorem Int.neg_gt_neg {a b:Int} (h: b < a) : -a < -b := by
   simp at h'
   exact hn1 h'
 
-theorem Int.neg_ge_neg {a b:Int} (h: a ≥ b) : -a ≤ -b := by
+/-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
+theorem Int.neg_ge_neg {a b:Int} (h: b ≤ a) : -a ≤ -b := by
   rcases h with ⟨ n, h ⟩
   use n
   rw [h]
@@ -548,6 +517,20 @@ theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by
   positivity
   simp [hn2, hm2]
   ring
+
+/-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
+theorem Int.add_gt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
+  rw [lt_iff_exists_positive_difference] at *
+  rcases h with ⟨ n, hn ⟩
+  use n
+  constructor
+  exact hn.left
+  have hn := hn.right
+  rw [hn]
+  ring
+
+theorem Int.mul_le_mul_of_nonneg_left {a b c:Int} (hab : a ≥ b) (hc: c ≥ 0) : a*c ≥ b*c := by
+  sorry
 
 lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
   constructor
@@ -573,7 +556,7 @@ lemma Int.pos_iff_gt_0 {a : Int} : a.isPos ↔ 0 < a := by
   by_contra h
   rw [← h] at hw
   have := hw.2.symm
-  rw [eq_0_of_cast_eq_0] at this
+  rw [cast_eq_0_iff_eq_0] at this
   omega
 
   sorry
@@ -583,8 +566,7 @@ lemma Int.neg_iff_lt_0 {a : Int} : a.isNeg ↔ a < 0 := by
 
 lemma Int.trichotomous0 (a :Int) : 1 = 2 := by
   have := trichotomous a
-  rw [pos_iff] at this
-
+  sorry
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.trichotomous' (a b:Int) : a > b ∨ a < b ∨ a = b := by
@@ -615,7 +597,7 @@ theorem Int.le_antisymm {a b : Int} (hab: a ≤ b) (hba: b ≤ a) : a = b := by
   rw [add_assoc] at he
   have := eq_0_of_idempotent_add _ _ he
   norm_cast at this
-  rw [eq_0_of_cast_eq_0] at this
+  rw [cast_eq_0_iff_eq_0] at this
   rw [Nat.add_eq_zero] at this
   rcases this with ⟨rw1, rw2⟩
   rw [rw1] at hd
@@ -686,17 +668,13 @@ theorem Int.no_induction : ∃ P: Int → Prop, P 0 ∧ ∀ n, P n → P (n+1) �
   have := le_antisymm h this
   simp at this
 
+
+/-- A nonnegative number squared is nonnegative. This is a special case of 4.1.9 that's useful for proving the general case. --/
 lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by
   rw [show 0 = 0 * n by simp]
   exact mul_le_mul_of_nonneg_left h h
 
-/-- A nonnegative number squared is nonnegative. This is a special case of 4.1.9 that's useful for proving the general case. --/
-lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by sorry
-
 /-- Exercise 4.1.9. The square of any integer is nonnegative. -/
-theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by sorry
-
-/-- Exercise 4.1.9 -/
 theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by
   have trichotemy_zero := Int.trichotomous' n 0
   cases' trichotemy_zero with h1 h2

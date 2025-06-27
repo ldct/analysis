@@ -94,7 +94,7 @@ lemma Nat.pos_mul_pos {n m: Nat} (hn : n.isPos) (hm : m.isPos) : (n * m).isPos :
   exact h rfl
   intro n IH h
   rw [succ_mul]
-  exact add_pos (n * m) hm
+  exact add_pos_right (n * m) hm
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2 -/
 lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
@@ -278,7 +278,7 @@ lemma Nat.pow_2_eq_sq (a : Nat) : a ^ (2 : Nat) = a * a := by
 lemma Nat.add_cancel_left' (a b c: Nat) : a + b = a + c ↔  b = c := by
   constructor
   intro h
-  exact add_cancel_left a b c h
+  exact add_left_cancel a b c h
   intro h
   rw [h]
 

@@ -518,18 +518,7 @@ theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by
   simp [hn2, hm2]
   ring
 
-/-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
-theorem Int.add_gt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
-  rw [lt_iff_exists_positive_difference] at *
-  rcases h with ⟨ n, hn ⟩
-  use n
-  constructor
-  exact hn.left
-  have hn := hn.right
-  rw [hn]
-  ring
-
-theorem Int.mul_le_mul_of_nonneg_left {a b c:Int} (hab : a ≥ b) (hc: c ≥ 0) : a*c ≥ b*c := by
+theorem Int.mul_le_mul_of_nonneg_right {a b c:Int} (hab : a ≤ b) (hc: 0 ≤ c) : a*c ≤ b*c := by
   sorry
 
 lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
@@ -541,7 +530,7 @@ lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
   exact this
 
   intro h
-  have := add_gt_add_right a h
+  have := add_lt_add_right a h
   ring_nf at this
   exact this
 
@@ -673,7 +662,7 @@ theorem Int.no_induction : ∃ P: Int → Prop, P 0 ∧ ∀ n, P n → P (n+1) �
 /-- A nonnegative number squared is nonnegative. This is a special case of 4.1.9 that's useful for proving the general case. --/
 lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by
   rw [show 0 = 0 * n by simp]
-  exact mul_le_mul_of_nonneg_left h h
+  exact mul_le_mul_of_nonneg_right h h
 
 /-- Exercise 4.1.9. The square of any integer is nonnegative. -/
 theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by

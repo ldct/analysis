@@ -225,10 +225,6 @@ example : (8:Nat) > 5 := by
     use 3
   decide
 
-/-- Compare with Mathlib's `Nat.lt_succ_self`-/
-theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
-  sorry
-
 theorem Nat.self_ne_succ (n:Nat) : n ≠ n++ := by
   revert n
   apply induction
@@ -237,7 +233,8 @@ theorem Nat.self_ne_succ (n:Nat) : n ≠ n++ := by
   apply succ_ne_succ
   exact IH
 
-theorem Nat.succ_gt (n:Nat) : n++ > n := by
+/-- Compare with Mathlib's `Nat.lt_succ_self`-/
+theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
   rw [Nat.gt_iff_lt, Nat.lt_iff]
   constructor
   use 1

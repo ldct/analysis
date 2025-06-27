@@ -39,26 +39,71 @@ theorem boundedAwayNeg_def (a:ℕ → ℚ) : BoundedAwayNeg a ↔ ∃ (c:ℚ), c
   rfl
 
 /-- Examples 5.4.2 -/
-example : BoundedAwayPos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayPos (fun n ↦ 1 + 10^(-(n:ℤ)-1)) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
+  positivity
 
 /-- Examples 5.4.2 -/
-example : BoundedAwayNeg (fun n ↦ - - 10^(-(n:ℤ)-1)) := by sorry
+example : BoundedAwayNeg (fun n ↦ -1 - 10^(-(n:ℤ)-1)) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
+  positivity
 
 /-- Examples 5.4.2 -/
-example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by sorry
+example : ¬ BoundedAwayPos (fun n ↦ (-1)^n) := by
+  by_contra h
+  obtain ⟨ c, h1, h2 ⟩ := h
+  specialize h2 1
+  simp at h2
+  linarith
 
-example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by sorry
+example : ¬ BoundedAwayNeg (fun n ↦ (-1)^n) := by
+  by_contra h
+  obtain ⟨ c, h1, h2 ⟩ := h
+  specialize h2 0
+  simp at h2
+  linarith
 
-example : BoundedAwayZero (fun n ↦ (-1)^n) := by sorry
+example : BoundedAwayZero (fun n ↦ (-1)^n) := by
+  use 1
+  constructor
+  norm_num
+  intro n
+  simp
 
-theorem bounded_away_zero_of_pos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
-  sorry
+theorem BoundedAwayZero.of_boundedAwayPos {a:ℕ → ℚ} (ha: BoundedAwayPos a) : BoundedAwayZero a := by
+  obtain ⟨ c, h1, h2 ⟩ := ha
+  use c
+  constructor
+  exact h1
+  intro n
+  specialize h2 n
+  rw [abs_of_nonneg (by linarith)]
+  exact h2
 
-theorem bounded_away_zero_of_neg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
-  sorry
+theorem BoundedAwayZero.of_boundedAwayNeg {a:ℕ → ℚ} (ha: BoundedAwayNeg a) : BoundedAwayZero a := by
+  obtain ⟨ c, h1, h2 ⟩ := ha
+  use c
+  constructor
+  exact h1
+  intro n
+  specialize h2 n
+  rw [abs_of_neg (by linarith)]
+  linarith
 
 theorem not_bounded_away_pos_neg {a:ℕ → ℚ} : ¬ (BoundedAwayPos a ∧ BoundedAwayNeg a) := by
-  sorry
+  by_contra h
+  obtain ⟨ ⟨ c1, h1, h2⟩ , ⟨ c2, h3, h4 ⟩ ⟩ := h
+  specialize h2 0
+  specialize h4 0
+  linarith
 
 abbrev Real.isPos (x:Real) : Prop :=
   ∃ a:ℕ → ℚ, BoundedAwayPos a ∧ (a:Sequence).IsCauchy ∧ x = LIM a
@@ -262,7 +307,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
       _ ≤ _ := le_abs_self _
   have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
     contrapose! claim1
-    rw [Rat.eventuallyClose_iff] at claim1
+    rw [Rat.eventually_close_of_coe_coe] at claim1
     obtain ⟨ N, claim1 ⟩ := claim1
     specialize claim1 N (le_refl _)
     use N
@@ -279,8 +324,8 @@ theorem Real.LIM_mono {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequ
   (hmono: ∀ n, a n ≤ b n) :
     LIM a ≤ LIM b := by
   -- This proof is written to follow the structure of the original text.
-  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (IsCauchy.sub hb ha)
-  rw [←Real.LIM_sub hb ha] at this
+  have := LIM_of_nonneg (a := b - a) (by intro n; simp [hmono n]) (Sequence.IsCauchy.sub hb ha)
+  rw [←Real.LIM.sub hb ha] at this
   linarith
 
 /-- Remark 5.4.11 --/

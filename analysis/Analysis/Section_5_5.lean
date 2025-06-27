@@ -178,10 +178,7 @@ lemma Real.LUB_claim2
     have bound2 : ((a-b) n) = a n - 1 / (n+1) := by
       simp [hb n]
     have bound3 : 1/((n+1):ℚ) ≤ 1/(N+1) := by gcongr
-    -- weirdly, `linarith` times out here, so we proceed manually
-    rw [bound2] at bound1
-    apply le_of_lt (lt_of_lt_of_le _ bound3)
-    rwa [sub_lt_comm]
+    linarith
 
 /-- Theorem 5.5.9 (Existence of least upper bound)-/
 theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): ∃ S, IsLUB E S := by
@@ -200,7 +197,8 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM.harmonic
-    simp [←LIM_sub claim3 hb, S, this]
+    rw [← LIM.sub claim3 hb]
+    simp [S, this]
   use S
   rw [isLUB_def, upperBound_def]
   constructor
@@ -218,7 +216,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
     exact upperBound_upper (le_of_lt hm2) hy
   rw [claim4]
   apply LIM_of_le _ claim5
-  exact IsCauchy.sub claim3 hb
+  exact Sequence.IsCauchy.sub claim3 hb
 
 /-- A bare-bones extended real class to define supremum. -/
 inductive ExtendedReal where

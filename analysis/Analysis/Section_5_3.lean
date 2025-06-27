@@ -67,24 +67,60 @@ theorem CauchySequence.coe_coe {a:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) : mk'
 
 /-- Proposition 5.3.3 / Exercise 5.3.1 -/
 theorem Sequence.equiv_trans {a b c:ℕ → ℚ} (hab: Sequence.equiv a b) (hbc: Sequence.equiv b c) :
-  Sequence.equiv a c := by sorry
+  Sequence.equiv a c := by
+  unfold Sequence.equiv at *
+  intro ε hε
+  specialize hab (ε/2) (by positivity)
+  specialize hbc (ε/2) (by positivity)
+  rw [Rat.eventually_close_of_coe_coe] at hab hbc ⊢
+  obtain ⟨ n₀, hab ⟩ := hab
+  obtain ⟨ m₀, hbc ⟩ := hbc
+  use max n₀ m₀
+  intro n hn
+  specialize hab n (le_of_max_le_left hn)
+  specialize hbc n (le_of_max_le_right hn)
+  rw [abs_le] at *
+  constructor <;> linarith
 
 /-- Proposition 5.3.3 / Exercise 5.3.1 -/
 instance CauchySequence.instSetoid : Setoid CauchySequence where
   r := fun a b ↦ Sequence.equiv a b
   iseqv := {
-     refl := sorry
-     symm := sorry
-     trans := sorry
+     refl := by
+      intro a
+      unfold Sequence.equiv
+      intro ε hε
+      rw [Rat.eventually_close_of_coe_coe]
+      simp
+      use 0
+      intro n h'
+      positivity
+     symm := by
+      intro x y hxy ε hε
+      specialize hxy ε (by positivity)
+      rw [Rat.eventually_close_of_coe_coe] at *
+      obtain ⟨ n₀, hxy ⟩ := hxy
+      use n₀
+      intro n hn
+      rw [abs_sub_comm]
+      exact hxy n hn
+     trans := by
+       intro _ _ _ hxy hyz
+       exact Sequence.equiv_trans hxy hyz
   }
 
 theorem CauchySequence.equiv_iff (a b: CauchySequence) : a ≈ b ↔ Sequence.equiv a b := by rfl
 
 /-- Every constant sequence is Cauchy -/
-theorem Sequence.IsCauchy.const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).IsCauchy := by sorry
+theorem Sequence.IsCauchy.const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).IsCauchy := by
+  rw [isCauchy_of_coe]
+  intro ε hε
+  use 0
+  unfold Section_4_3.dist
+  simp [le_of_lt hε]
 
 instance CauchySequence.instZero : Zero CauchySequence where
-  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.IsCauchy.const (0:ℚ))
+  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.isCauchy_of_const _)
 
 abbrev Real := Quotient CauchySequence.instSetoid
 
@@ -143,6 +179,29 @@ theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
   convert Section_4_3.add_close h1 h2
   linarith
 
+/--Lemma 5.3.6 (Sum of Cauchy sequences is Cauchy)-/
+theorem Sequence.add_cauchy {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+    (a + b:Sequence).IsCauchy := by
+  -- This proof is written to follow the structure of the original text.
+  rw [isCauchy_of_coe] at *
+  intro ε hε
+  have : ε/2 > 0 := by exact half_pos hε
+  specialize ha (ε/2) this
+  specialize hb (ε/2) this
+  rw [Rat.eventuallySteady_def] at ha hb ⊢
+  obtain ⟨ N, hN, hha ⟩ := ha
+  obtain ⟨ M, hM, hhb ⟩ := hb
+  use max N M
+  simp at hN hM ⊢
+  simp [hN, Rat.steady] at hha hhb ⊢
+  intro n hnN hnM m hmN hmM
+  have hn := hN.trans hnN
+  have hm := hM.trans hmM
+  specialize hha n hnN m hmN
+  specialize hhb n hn hnM m hm hmM
+  simp [hn, hm, hnN, hnM, hmN, hmM] at hha hhb ⊢
+  convert Section_4_3.add_close hha hhb
+  ring
 
 /--Lemma 5.3.7 (Sum of equivalent sequences is equivalent)-/
 theorem Sequence.add_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (haa': Sequence.equiv a a') :
@@ -254,7 +313,20 @@ theorem Real.ratCast_def (q:ℚ) : (q:Real) = LIM (fun _ ↦ q) := by
 /-- Exercise 5.3.3 -/
 @[simp]
 theorem Real.ratCast_inj (q r:ℚ) : (q:Real) = (r:Real) ↔ q = r := by
-  sorry
+  constructor
+  intro h
+  rw [Real.ratCast_def, Real.ratCast_def] at h
+  rw [Real.LIM_eq_LIM (Sequence.isCauchy_of_const q) (Sequence.isCauchy_of_const r)] at h
+  rw [Sequence.equiv_iff] at h
+  by_contra h'
+  have : 0 < |q - r| := abs_sub_pos.mpr h'
+  specialize h (|q - r|/2) (by positivity)
+  obtain ⟨ N, h ⟩ := h
+  specialize h N (by omega)
+  linarith
+
+  intro h
+  rw [h]
 
 instance Real.instOfNat {n:ℕ} : OfNat Real n where
   ofNat := ((n:ℚ):Real)
@@ -285,34 +357,89 @@ theorem Real.neg_of_LIM (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) : -LIM a = L
 theorem Real.neg_of_cauchy (a:ℕ → ℚ) (ha: (a:Sequence).IsCauchy) :
     ((-a:ℕ → ℚ):Sequence).IsCauchy := by sorry
 
-
 /-- Proposition 5.3.11 -/
 noncomputable instance Real.addGroup_inst : AddGroup Real :=
-AddGroup.ofLeftAxioms (by sorry) (by sorry) (by sorry)
+AddGroup.ofLeftAxioms (by
+  intro a b c
+  obtain ⟨ x, hx, hx' ⟩ := eq_lim a
+  obtain ⟨ y, hy, hy' ⟩ := eq_lim b
+  obtain ⟨ z, hz, hz' ⟩ := eq_lim c
+  rw [hx', hy', hz']
+  -- At this point, we have e₁ = e₂, where e₁ is some expression involving LIM
+  -- Our strategy is to repeatedly push LIM "upwards" so that our goal becomes LIM e₁' = LIM e₂'
+  -- can repeatedly push the LIM to the outermost, but we need to clear the side conditions
+  have hxy := Sequence.add_isCauchy _ _ hx hy
+  have hyz := Sequence.add_isCauchy _ _ hy hz
+  repeat rw [add_of_LIM (by assumption) (by assumption)]
+  rw [show x + y + z = x + (y + z) by ext i; dsimp; ring]
+) (by
+  intro a
+  obtain ⟨ x, hx, hx' ⟩ := eq_lim a
+  rw [hx', ← LIM_zero]
+  rw [add_of_LIM]
+  congr
+  ext i
+  dsimp
+  ring
+  apply Sequence.isCauchy_of_const
+  exact hx
+) (by
+  intro a
+  obtain ⟨ x, hx, hx' ⟩ := eq_lim a
+  rw [hx', neg_of_LIM, add_of_LIM, ← LIM_zero]
+  congr
+  ext i
+  dsimp
+  ring
+  rw [Sequence.isCauchy_of_coe] at *
+  intro ε hε
+  specialize hx ε hε
+  obtain ⟨ N, hx ⟩ := hx
+  use N
+  intro j hj k hk
+  specialize hx j hj k hk
+  unfold Section_4_3.dist at *
+  simp
+  rw [abs_sub_comm] at hx
+  rw [show -x j + x k = x k - x j by ring]
+  repeat exact hx
+)
 
 theorem Real.sub_eq_add_neg (x y:Real) : x - y = x + (-y) :=  rfl
 
-theorem Real.sub_of_cauchy {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
-    ((a-b:ℕ → ℚ):Sequence).IsCauchy := by sorry
+theorem Real.sub_isCauchy {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+    ((a-b:ℕ → ℚ):Sequence).isCauchy := by
+  rw [Sequence.isCauchy_of_coe] at *
+  intro ε hε
+  obtain ⟨ N1, ha ⟩ := ha (ε/2) (by positivity)
+  obtain ⟨ N2, hb ⟩ := hb (ε/2) (by positivity)
+  use max N1 N2
+  intro j hj k hk
+  specialize ha j (by omega) k (by omega)
+  specialize hb j (by omega) k (by omega)
+  unfold Section_4_3.dist at *
+  rw [abs_le] at *
+  dsimp
+  constructor <;> linarith
 
-theorem Real.sub_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
-  LIM a - LIM b = LIM (a - b) := by sorry
+theorem Real.sub_of_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).isCauchy) (hb: (b:Sequence).isCauchy) :
+  LIM a - LIM b = LIM (a - b) := by
 
 theorem Real.sub_of_ratCast (a b:ℚ) : (a:Real) - (b:Real) = (a-b:ℚ) := by sorry
 
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instAddCommGroup : AddCommGroup Real where
   add_comm := by sorry
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instCommMonoid : CommMonoid Real where
   mul_comm := by sorry
   mul_assoc := by sorry
   one_mul := by sorry
   mul_one := by sorry
 
-/-- Proposition 5.3.12 (laws of algebra) -/
+/-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instCommRing : CommRing Real where
   left_distrib := by sorry
   right_distrib := by sorry

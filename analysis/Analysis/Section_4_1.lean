@@ -697,8 +697,7 @@ theorem Int.sq_nonneg' (n:Int) : ∃ (m:Nat), n*n = m := by
   rw [le_iff] at this
   rcases this with ⟨ m, hm ⟩
   use m
-  rw [hm]
-  simp
+  simp [hm]
 
 /--
   Not in textbook: create an equivalence between Int and ℤ.

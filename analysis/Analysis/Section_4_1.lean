@@ -588,11 +588,9 @@ lemma Int.is_additive_identity_iff_eq_0 (a b : Int) : (a = a + b) ↔ b = 0 := b
   constructor
   intro h
   rw (occs := .pos [1]) [show a = a + 0 by exact Eq.symm (add_zero a)] at h
-  simp at h
-  exact h
+  simpa using h
   intro h
-  rw [h]
-  simp
+  simp [h]
 
 /-- Order is anti-symmetric  -/
 theorem Int.le_antisymm {a b : Int} (hab: a ≤ b) (hba: b ≤ a) : a = b := by

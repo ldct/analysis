@@ -583,10 +583,16 @@ theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
 
-theorem Int.eq_0_of_idempotent_add (a b : Int) (h : a = a + b) : b = 0 := by
+/-- (Not from textbook) 0 is the only additive identity -/
+lemma Int.is_additive_identity_iff_eq_0 (a b : Int) : (a = a + b) ↔ b = 0 := by
+  constructor
+  intro h
   rw (occs := .pos [1]) [show a = a + 0 by exact Eq.symm (add_zero a)] at h
   simp at h
   exact h
+  intro h
+  rw [h]
+  simp
 
 /-- Order is anti-symmetric  -/
 theorem Int.le_antisymm {a b : Int} (hab: a ≤ b) (hba: b ≤ a) : a = b := by
@@ -595,11 +601,11 @@ theorem Int.le_antisymm {a b : Int} (hab: a ≤ b) (hba: b ≤ a) : a = b := by
   rcases hba with ⟨e, he⟩
   rw [hd] at he
   rw [add_assoc] at he
-  have := eq_0_of_idempotent_add _ _ he
-  norm_cast at this
-  rw [cast_eq_0_iff_eq_0] at this
-  rw [Nat.add_eq_zero] at this
-  rcases this with ⟨rw1, rw2⟩
+  rw [is_additive_identity_iff_eq_0] at he
+  norm_cast at he
+  rw [cast_eq_0_iff_eq_0] at he
+  rw [Nat.add_eq_zero] at he
+  rcases he with ⟨rw1, rw2⟩
   rw [rw1] at hd
   simp at hd
   exact Eq.symm hd
@@ -619,9 +625,6 @@ instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := b
         apply isFalse
         sorry
   exact Quotient.recOnSubsingleton₂ n m this
-
-/-- (Not from textbook) 0 is the only additive identity -/
-lemma Int.is_additive_identity_iff_eq_0 (b : Int) : (∀ a, a = a + b) ↔ b = 0 := by sorry
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
 instance Int.instLinearOrder : LinearOrder Int where

@@ -46,13 +46,15 @@ theorem Nat.one_mul (m: Nat) : 1 * m = m := by
 theorem Nat.two_mul (m: Nat) : 2 * m = 0 + m + m := by
   rw [←one_succ, succ_mul, one_mul']
 
-theorem Nat.mul_zero (m: Nat) : m * 0 = 0 := by
+/-- This lemma will be useful to prove Lemma 2.3.2. -/
+lemma Nat.mul_zero (m: Nat) : m * 0 = 0 := by
   revert m; apply induction
   rw [zero_mul]
   intro n IH
   rw [succ_mul, IH, zero_add]
 
-theorem Nat.mul_succ (n m: Nat) : n * m++ = n * m + n := by
+/-- This lemma will be useful to prove Lemma 2.3.2. -/
+lemma Nat.mul_succ (n m: Nat) : n * m++ = n * m + n := by
   revert n; apply induction
   rw [zero_mul, zero_mul, add_zero]
   intro n IH

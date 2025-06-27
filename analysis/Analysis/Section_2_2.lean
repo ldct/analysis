@@ -260,7 +260,7 @@ theorem Nat.ge_trans {a b c:Nat} (hab: a ≥ b) (hbc: b ≥ c) : a ≥ c := by
 
 theorem Nat.eq_0_of_idempotent_add (a b : Nat) (h : a = a + b) : b = 0 := by
   rw (occs := .pos [1]) [show a = a + 0 by exact Eq.symm (add_zero a)] at h
-  exact add_cancel_left a b 0 (Eq.symm h)
+  exact add_left_cancel a b 0 (id (Eq.symm h))
 
 /-- (c) (Order is anti-symmetric). Compare with Mathlib's `Nat.le_antisymm`  -/
 theorem Nat.ge_antisymm {a b:Nat} (hab: a ≥ b) (hba: b ≥ a) : a = b := by
@@ -287,7 +287,7 @@ theorem Nat.add_ge_add_right (a b c:Nat) : a ≥ b ↔ a + c ≥ b + c := by
   rcases h with ⟨d, hd⟩
   rw [add_comm b, add_assoc] at hd
   rw [add_comm a] at hd
-  have hd := add_cancel_left _ _ _ hd
+  have hd := add_left_cancel _ _ _ hd
   use d
 
 /-- (d) (Addition preserves order).  Compare with Mathlib's `Nat.add_le_add_left`  -/
@@ -397,7 +397,7 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
     tauto
   . have why : a++ > b := by
       rw [case2]
-      exact Nat.succ_gt b
+      exact succ_gt_self b
     tauto
   have why : a++ > b := by
     rw [Nat.gt_iff_lt] at *

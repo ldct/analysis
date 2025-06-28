@@ -34,7 +34,8 @@ namespace Section_4_3
 /-- Definition 4.3.1 (Absolute value) -/
 abbrev abs (x:ℚ) : ℚ := if x > 0 then x else (if x < 0 then -x else 0)
 
-theorem abs_of_pos {x: ℚ} (hx: x > 0) : abs x = x := by simp [hx]
+-- compare _root_.abs_of_pos
+theorem abs_of_pos {x: ℚ} (hx: 0 < x) : abs x = x := by simp [hx]
 
 /-- Definition 4.3.1 (Absolute value) -/
 theorem abs_of_neg {x: ℚ} (hx: x < 0) : abs x = -x := by
@@ -50,7 +51,17 @@ theorem abs_of_zero : abs 0 = 0 := by rfl
   Henceforth we use the Mathlib absolute value.
 -/
 theorem abs_eq_abs (x: ℚ) : abs x = |x| := by
-  sorry
+  unfold abs
+  have : x > 0 ∨ x = 0 ∨ x < 0 := by exact trichotomous x 0
+  cases this with
+    | inl h =>
+      simp [h, _root_.abs_of_pos]
+    | inr h =>
+      cases h with
+      | inl h => simp [h]
+      | inr h => simp [show ¬(0 < x) by linarith, h, _root_.abs_of_neg]
+
+example : |(0: ℚ)| = 0 := by rfl
 
 abbrev dist (x y : ℚ) := |x - y|
 
@@ -61,28 +72,43 @@ abbrev dist (x y : ℚ) := |x - y|
 theorem dist_eq (x y: ℚ) : dist x y = |x-y| := rfl
 
 /-- Proposition 4.3.3(a) / Exercise 4.3.1 -/
-theorem abs_nonneg (x: ℚ) : |x| ≥ 0 := by sorry
+theorem abs_nonneg (x: ℚ) : 0 ≤ |x| := by
+  cases lt_trichotomy 0 x with
+    | inl h =>
+      rw [_root_.abs_of_pos]
+      all_goals positivity
+    | inr h =>
+      cases h with
+      | inl h =>
+        rw [← h]
+        rfl
+      | inr h =>
+        rw [_root_.abs_of_neg]
+        linarith
+        exact h
 
 /-- Proposition 4.3.3(a) / Exercise 4.3.1 -/
-theorem abs_eq_zero_iff (x: ℚ) : |x| = 0 ↔ x = 0 := by sorry
+theorem abs_eq_zero_iff (x: ℚ) : |x| = 0 ↔ x = 0 := by
+  exact abs_eq_zero
 
 /-- Proposition 4.3.3(b) / Exercise 4.3.1 -/
-theorem abs_add (x y:ℚ) : |x + y| ≤ |x| + |y| := by sorry
+theorem abs_add (x y:ℚ) : |x + y| ≤ |x| + |y| := by
+  exact abs_add_le x y
 
 /-- Proposition 4.3.3(c) / Exercise 4.3.1 -/
-theorem abs_le_iff (x y:ℚ) : -y ≤ x ∧ x ≤ y ↔ |x| ≤ y  := by sorry
+theorem abs_le_iff (x y:ℚ) : -y ≤ x ∧ x ≤ y ↔ |x| ≤ y  := by exact Iff.symm abs_le
 
 /-- Proposition 4.3.3(c) / Exercise 4.3.1 -/
 theorem le_abs (x:ℚ) : -|x| ≤ x ∧ x ≤ |x|  := by sorry
 
 /-- Proposition 4.3.3(d) / Exercise 4.3.1 -/
-theorem abs_mul (x y:ℚ) : |x * y| = |x| * |y| := by sorry
+theorem abs_mul (x y:ℚ) : |x * y| = |x| * |y| := by exact _root_.abs_mul x y
 
 /-- Proposition 4.3.3(d) / Exercise 4.3.1 -/
-theorem abs_neg (x:ℚ) : |-x| = |x| := by sorry
+theorem abs_neg (x:ℚ) : |-x| = |x| := by exact _root_.abs_neg x
 
 /-- Proposition 4.3.3(e) / Exercise 4.3.1 -/
-theorem dist_nonneg (x y:ℚ) : dist x y ≥ 0 := by sorry
+theorem dist_nonneg (x y:ℚ) : dist x y ≥ 0 := by exact abs_nonneg (x - y)
 
 /-- Proposition 4.3.3(e) / Exercise 4.3.1 -/
 theorem dist_eq_zero_iff (x y:ℚ) : dist x y = 0 ↔ x = y := by
@@ -92,7 +118,7 @@ theorem dist_eq_zero_iff (x y:ℚ) : dist x y = 0 ↔ x = y := by
 theorem dist_symm (x y:ℚ) : dist x y = dist y x := by sorry
 
 /-- Proposition 4.3.3(f) / Exercise 4.3.1 -/
-theorem dist_le (x y z:ℚ) : dist x z ≤ dist x y + dist y z := by sorry
+theorem dist_le (x y z:ℚ) : dist x z ≤ dist x y + dist y z := by exact abs_sub_le x y z
 
 /--
   Definition 4.3.4 (eps-closeness).  In the text the notion is undefined for ε zero or negative,
@@ -102,18 +128,47 @@ theorem dist_le (x y z:ℚ) : dist x z ≤ dist x y + dist y z := by sorry
 theorem close_iff (ε x y:ℚ): ε.close x y ↔ |x - y| ≤ ε := by rfl
 
 /-- Examples 4.3.6 -/
-example : (0.1:ℚ).close (0.99:ℚ) (1.01:ℚ) := by sorry
+example : (0.1:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
+  rw [close_iff]
+  norm_num
+  have : |(1 : ℚ ) / 50| = 1 / 50 := by norm_num
+  rw [this]
+  norm_num
 
 /-- Examples 4.3.6 -/
-example : ¬ (0.01:ℚ).close (0.99:ℚ) (1.01:ℚ) := by sorry
+example : ¬ (0.01:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
+  rw [close_iff]
+  norm_num
+  have : |(1 : ℚ ) / 50| = 1 / 50 := by norm_num
+  rw [this]
+  norm_num
 
 /-- Examples 4.3.6 -/
-example (ε : ℚ) (hε : ε > 0) : ε.close 2 2 := by sorry
+example (ε : ℚ) (hε : 0 < ε) : ε.close 2 2 := by
+  rw [close_iff]
+  simp
+  positivity
 
-theorem close_refl (x:ℚ) : (0:ℚ).close x x := by sorry
+theorem close_refl (x:ℚ) : (0:ℚ).close x x := by
+  rw [close_iff]
+  simp
 
 /-- Proposition 4.3.7(a) / Exercise 4.3.2 -/
-theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by sorry
+theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by
+  simp_rw [close_iff]
+  constructor
+  intro h
+  rw [h]
+  intro ε hε
+  simp
+  positivity
+
+  intro h
+  by_contra hxy
+  have : |x - y| ≠ 0 := by
+    by_contra h
+    sorry
+  sorry
 
 /-- Proposition 4.3.7(b) / Exercise 4.3.2 -/
 theorem close_symm (ε x y:ℚ) : ε.close x y ↔ ε.close y x := by sorry

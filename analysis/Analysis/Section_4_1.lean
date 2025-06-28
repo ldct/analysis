@@ -479,6 +479,15 @@ theorem Int.mul_lt_mul_of_pos_right {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c 
   simp
   ring
 
+theorem Int.mul_le_mul_of_nonneg_right {a b c:Int} (hab : a ≤ b) (hc: 0 ≤ c) : a*c ≤ b*c := by
+  rw [le_iff] at *
+  rcases hab with ⟨ w, hw ⟩
+  rcases hc with ⟨ d, hd ⟩
+  use w*d
+  rw [hw, hd]
+  ring_nf
+  norm_cast
+
 /-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
 theorem Int.neg_gt_neg {a b:Int} (h: b < a) : -a < -b := by
   rw [lt_iff_exists_positive_difference] at h
@@ -517,9 +526,6 @@ theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by
   positivity
   simp [hn2, hm2]
   ring
-
-theorem Int.mul_le_mul_of_nonneg_right {a b c:Int} (hab : a ≤ b) (hc: 0 ≤ c) : a*c ≤ b*c := by
-  sorry
 
 lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
   constructor

@@ -52,14 +52,10 @@ theorem abs_of_zero : abs 0 = 0 := by rfl
 -/
 theorem abs_eq_abs (x: ℚ) : abs x = |x| := by
   unfold abs
-  have : x > 0 ∨ x = 0 ∨ x < 0 := by exact trichotomous x 0
-  cases this with
-    | inl h =>
-      simp [h, _root_.abs_of_pos]
-    | inr h =>
-      cases h with
-      | inl h => simp [h]
-      | inr h => simp [show ¬(0 < x) by linarith, h, _root_.abs_of_neg]
+  obtain h | h | h := lt_trichotomy 0 x
+  · simp [h, _root_.abs_of_pos]
+  · simp [← h]
+  · simp [show ¬(0 < x) by linarith, h, _root_.abs_of_neg]
 
 example : |(0: ℚ)| = 0 := by rfl
 
@@ -73,19 +69,16 @@ theorem dist_eq (x y: ℚ) : dist x y = |x-y| := rfl
 
 /-- Proposition 4.3.3(a) / Exercise 4.3.1 -/
 theorem abs_nonneg (x: ℚ) : 0 ≤ |x| := by
-  cases lt_trichotomy 0 x with
-    | inl h =>
-      rw [_root_.abs_of_pos]
-      all_goals positivity
-    | inr h =>
-      cases h with
-      | inl h =>
-        rw [← h]
-        rfl
-      | inr h =>
-        rw [_root_.abs_of_neg]
-        linarith
-        exact h
+  obtain h | h | h := lt_trichotomy 0 x
+  · rw [_root_.abs_of_pos]
+    repeat positivity
+
+  · rw [← h]
+    rfl
+
+  · rw [_root_.abs_of_neg]
+    linarith
+    exact h
 
 /-- Proposition 4.3.3(a) / Exercise 4.3.1 -/
 theorem abs_eq_zero_iff (x: ℚ) : |x| = 0 ↔ x = 0 := by
@@ -99,23 +92,38 @@ theorem abs_add (x y:ℚ) : |x + y| ≤ |x| + |y| := by
 theorem abs_le_iff (x y:ℚ) : -y ≤ x ∧ x ≤ y ↔ |x| ≤ y  := by exact Iff.symm abs_le
 
 /-- Proposition 4.3.3(c) / Exercise 4.3.1 -/
-theorem le_abs (x:ℚ) : -|x| ≤ x ∧ x ≤ |x|  := by sorry
+theorem le_abs (x:ℚ) : -|x| ≤ x ∧ x ≤ |x|  := by
+  constructor
+  exact neg_abs_le x
+  exact le_abs_self x
 
 /-- Proposition 4.3.3(d) / Exercise 4.3.1 -/
-theorem abs_mul (x y:ℚ) : |x * y| = |x| * |y| := by exact _root_.abs_mul x y
+theorem abs_mul (x y:ℚ) : |x * y| = |x| * |y| := _root_.abs_mul x y
 
 /-- Proposition 4.3.3(d) / Exercise 4.3.1 -/
-theorem abs_neg (x:ℚ) : |-x| = |x| := by exact _root_.abs_neg x
+theorem abs_neg (x:ℚ) : |-x| = |x| := _root_.abs_neg x
 
 /-- Proposition 4.3.3(e) / Exercise 4.3.1 -/
-theorem dist_nonneg (x y:ℚ) : dist x y ≥ 0 := by exact abs_nonneg (x - y)
+theorem dist_nonneg (x y:ℚ) : dist x y ≥ 0 := abs_nonneg (x - y)
+
+example (x : ℝ) (h : |x| = 0) : x = 0 := by exact abs_eq_zero.mp h
 
 /-- Proposition 4.3.3(e) / Exercise 4.3.1 -/
 theorem dist_eq_zero_iff (x y:ℚ) : dist x y = 0 ↔ x = y := by
-  sorry
+  constructor
+  unfold dist
+  intro h
+  rw [abs_eq_zero] at h
+  linarith
+  intro h
+  rw [h]
+  unfold dist
+  simp
 
 /-- Proposition 4.3.3(f) / Exercise 4.3.1 -/
-theorem dist_symm (x y:ℚ) : dist x y = dist y x := by sorry
+theorem dist_symm (x y:ℚ) : dist x y = dist y x := by
+  unfold dist
+  exact abs_sub_comm x y
 
 /-- Proposition 4.3.3(f) / Exercise 4.3.1 -/
 theorem dist_le (x y z:ℚ) : dist x z ≤ dist x y + dist y z := by exact abs_sub_le x y z
@@ -154,7 +162,7 @@ theorem close_refl (x:ℚ) : (0:ℚ).close x x := by
   simp
 
 /-- Proposition 4.3.7(a) / Exercise 4.3.2 -/
-theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by
+theorem eq_iff_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by
   simp_rw [close_iff]
   constructor
   intro h
@@ -165,37 +173,67 @@ theorem eq_if_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y :=
 
   intro h
   by_contra hxy
-  have : |x - y| ≠ 0 := by
-    by_contra h
-    sorry
-  sorry
+  have : |x - y| > 0 := abs_sub_pos.mpr hxy
+  specialize h (|x - y| / 2) (by linarith)
+  linarith
 
 /-- Proposition 4.3.7(b) / Exercise 4.3.2 -/
-theorem close_symm (ε x y:ℚ) : ε.close x y ↔ ε.close y x := by sorry
+theorem close_symm (ε x y:ℚ) : ε.close x y ↔ ε.close y x := by
+  rw [close_iff, close_iff]
+  rw [show |x - y| = |y - x| by exact dist_symm x y]
 
 /-- Proposition 4.3.7(c) / Exercise 4.3.2 -/
-theorem close_trans {ε δ x y:ℚ} (hxy: ε.close x y) (hyz: δ.close y z) :
-    (ε + δ).close x z := by sorry
+theorem close_trans {ε δ x y z:ℚ} (hxy: ε.close x y) (hyz: δ.close y z) :
+    (ε + δ).close x z := by
+  rw [close_iff, abs_le] at *
+  constructor
+  all_goals linarith
 
 /-- Proposition 4.3.7(d) / Exercise 4.3.2 -/
 theorem add_close {ε δ x y z w:ℚ} (hxy: ε.close x y) (hzw: δ.close z w) :
-    (ε + δ).close (x+z) (y+w) := by sorry
+    (ε + δ).close (x+z) (y+w) := by
+  rw [close_iff, abs_le] at *
+  constructor
+  all_goals linarith
 
 /-- Proposition 4.3.7(d) / Exercise 4.3.2 -/
 theorem sub_close {ε δ x y z w:ℚ} (hxy: ε.close x y) (hzw: δ.close z w) :
-    (ε + δ).close (x-z) (y-w) := by sorry
+    (ε + δ).close (x-z) (y-w) := by
+  rw [close_iff, abs_le] at *
+  constructor
+  all_goals linarith
 
 /-- Proposition 4.3.7(e) / Exercise 4.3.2, slightly strengthened -/
 theorem close_mono {ε ε' x y:ℚ} (hxy: ε.close x y) (hε: ε' ≥  ε) :
-    ε'.close x y := by sorry
+    ε'.close x y := by
+  rw [close_iff, abs_le] at *
+  constructor
+  all_goals linarith
 
 /-- Proposition 4.3.7(f) / Exercise 4.3.2 -/
 theorem close_between {ε x y z w:ℚ} (hxy: ε.close x y) (hyz: ε.close x z)
-  (hbetween: (y ≤ w ∧ w ≤ z) ∨ (z ≤ w ∧ w ≤ y)) : ε.close x w := by sorry
+  (hbetween: (y ≤ w ∧ w ≤ z) ∨ (z ≤ w ∧ w ≤ y)) : ε.close x w := by
+  obtain h | h := hbetween
+  rw [close_iff, abs_le] at *
+  constructor
+  linarith
+  linarith
+  rw [close_iff, abs_le] at *
+  constructor
+  linarith
+  linarith
 
 /-- Proposition 4.3.7(g) / Exercise 4.3.2 -/
-theorem close_mul_right {ε x y z:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) :
-    (ε*|z|).close (x * z) (y * z) := by sorry
+theorem close_mul_right {ε x y z:ℚ} (hxy: ε.close x y) :
+    (ε*|z|).close (x * z) (y * z) := by
+  rw [close_iff] at *
+  rw [show x * z - y * z = (x - y) * z by ring, abs_mul]
+  have : 0 < |z| ∨ |z| = 0 := LE.le.gt_or_eq (abs_nonneg z)
+  obtain h | h := this
+  exact (mul_le_mul_iff_of_pos_right h).mpr hxy
+  simp only [abs_eq_zero] at h
+  rw [h]
+  norm_num
 
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
 theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) :
@@ -228,19 +266,21 @@ example : (0:ℚ)^0 = 1 := pow_zero 0
 lemma pow_succ (x:ℚ) (n:ℕ) : x^(n+1) = x^n * x := _root_.pow_succ x n
 
 /-- Proposition 4.3.10 (Properties of exponentiation, I) / Exercise 4.3.3 -/
-theorem pow_add (x:ℚ) (m n:ℕ) : x^n * x^m = x^(n+m) := by sorry
+theorem pow_add (x:ℚ) (m n:ℕ) : x^n * x^m = x^(n+m) := by exact Eq.symm (Lean.Grind.CommRing.pow_add x n m)
 
 /-- Proposition 4.3.10(a) (Properties of exponentiation, I) / Exercise 4.3.3 -/
-theorem pow_mul (x:ℚ) (m n:ℕ) : (x^n)^m = x^(n*m) := by sorry
+theorem pow_mul (x:ℚ) (m n:ℕ) : (x^n)^m = x^(n*m) := by exact Eq.symm (_root_.pow_mul x n m)
 
 /-- Proposition 4.3.10(a) (Properties of exponentiation, I) / Exercise 4.3.3 -/
-theorem mul_pow (x y:ℚ) (n:ℕ) : (x*y)^n = x^n * y^n := by sorry
+theorem mul_pow (x y:ℚ) (n:ℕ) : (x*y)^n = x^n * y^n := by exact _root_.mul_pow x y n
 
 /-- Proposition 4.3.10(b) (Properties of exponentiation, I) / Exercise 4.3.3 -/
-theorem pow_eq_zero (x:ℚ) (n:ℕ) : x^n = 0 ↔ x = 0 := by sorry
+theorem pow_eq_zero (x:ℚ) (n:ℕ) (hn : 0 < n): x^n = 0 ↔ x = 0 := by
+  rw [pow_eq_zero_iff]
+  positivity
 
 /-- Proposition 4.3.10(c) (Properties of exponentiation, I) / Exercise 4.3.3 -/
-theorem pow_nonneg {x:ℚ} (n:ℕ) (hx: x ≥ 0) : x^n ≥ 0 := by sorry
+theorem pow_nonneg {x:ℚ} (n:ℕ) (hx: x ≥ 0) : x^n ≥ 0 := by exact _root_.pow_nonneg hx n
 
 /-- Proposition 4.3.10(c) (Properties of exponentiation, I) / Exercise 4.3.3 -/
 theorem pow_pos {x:ℚ} (n:ℕ) (hx: x > 0) : x^n > 0 := by sorry

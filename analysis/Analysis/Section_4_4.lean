@@ -20,6 +20,8 @@ API; one can set oneself the exercise of doing so.
 /-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
 
 theorem Rat.between_int (x:ℚ) : ∃! n:ℤ, n ≤ x ∧ x < n+1 := by
+  have : x.num / x.den = x := num_div_den x
+  rw [← this]
   sorry
 
 theorem Nat.exists_gt (x:ℚ) : ∃ n:ℕ, n > x := by
@@ -31,36 +33,36 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
   -- The reader is encouraged to find quicker proofs, for instance
   -- using Mathlib's `linarith` tactic.
   use (x+y)/2
-  have h' : x/2 < y/2 := by
-    rw [show x/2 = x*(1/2) by ring, show y/2 = y*(1/2) by ring]
-    apply mul_lt_mul_of_pos_right h
-    positivity
   constructor
-  . replace h' := add_lt_add_right h' (x/2)
-    convert h' using 1
-    all_goals ring
-  replace h' := add_lt_add_right h' (y/2)
-  convert h' using 1
-  all_goals ring
+  all_goals linarith
 
 /-- Exercise 4.4.2 -/
 theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := by
   sorry
 
 def Int.infinite_descent : Decidable (∃ a:ℕ → ℤ, ∀ n, a (n+1) < a n) := by
-  -- the first line of this construction should be either `apply isTrue` or `apply isFalse`.
-  sorry
+  apply isTrue
+  use fun n => -n
+  intro n
+  dsimp
+  linarith
 
 #check even_iff_exists_two_mul
 #check odd_iff_exists_bit1
 
 theorem Nat.even_or_odd'' (n:ℕ) : Even n ∨ Odd n := by
-  sorry
+  exact even_or_odd n
 
 theorem Nat.not_even_and_odd (n:ℕ) : ¬ (Even n ∧ Odd n) := by
-  sorry
+  by_contra h
+  obtain ⟨ ⟨x, h1⟩ , ⟨ y, h2 ⟩ ⟩ := h
+  rw [h1] at h2
+  clear h1
+  clear n
+  omega
 
 #check Nat.rec
+
 /-- Proposition 4.4.4 / Exercise 4.4.3  -/
 theorem Rat.not_exist_sqrt_two : ¬ ∃ x:ℚ, x^2 = 2 := by
   -- This proof is written to follow the structure of the original text.
@@ -135,7 +137,7 @@ theorem Rat.exist_approx_sqrt_two {ε:ℚ} (hε:ε>0) : ∃ x ≥ (0:ℚ), x^2 <
   have (n:ℕ): (n*ε)^2 < 2 := by
     induction' n with n hn
     . simp
-    specialize h (n*ε) (by sorry) hn
+    specialize h (n*ε) (by positivity) hn
     simp [add_mul]
     apply lt_of_le_of_ne h
     have := not_exist_sqrt_two

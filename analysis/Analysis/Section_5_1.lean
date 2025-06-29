@@ -87,11 +87,47 @@ lemma Rat.steady_def (ε: ℚ) (a: Chapter5.Sequence) :
 
 namespace Chapter5
 
-/-- Example 5.1.5 -/
-example : (1:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+def OneZero : Sequence := ((fun n:ℕ ↦ if (Even n) then (1:ℚ) else (0:ℚ)):Sequence)
 
 /-- Example 5.1.5 -/
-example : ¬ (0.5:ℚ).steady ((fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)):Sequence) := by sorry
+example : (1:ℚ).steady OneZero := by
+  unfold Rat.steady
+  unfold OneZero
+  dsimp
+  intro n hn m hm
+  simp [hn, hm]
+  obtain h | h := Decidable.em (Even n.toNat)
+  obtain h' | h' := Decidable.em (Even m.toNat)
+
+  simp [h, h']
+  unfold Rat.close
+  norm_cast
+
+  simp [h, h']
+  unfold Rat.close
+  norm_cast
+
+  obtain h' | h' := Decidable.em (Even m.toNat)
+
+  simp [h, h']
+  unfold Rat.close
+  norm_cast
+
+  simp [h, h']
+  unfold Rat.close
+  norm_cast
+
+
+/-- Example 5.1.5 -/
+example : ¬ (0.5:ℚ).steady OneZero := by
+  unfold OneZero
+  unfold Rat.steady
+  dsimp
+  by_contra h
+  specialize h 0 (by norm_num) 1 (by norm_num)
+  dsimp at h
+  unfold Rat.close at h
+  norm_num at h
 
 /-- Example 5.1.5 -/
 example : (0.1:ℚ).steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry

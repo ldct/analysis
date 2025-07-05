@@ -84,7 +84,7 @@ theorem CauchySequence.equiv_iff (a b: CauchySequence) : a ≈ b ↔ Sequence.eq
 theorem Sequence.isCauchy_of_const (a:ℚ) : ((fun _:ℕ ↦ a):Sequence).isCauchy := by sorry
 
 instance CauchySequence.instZero : Zero CauchySequence where
-  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.isCauchy_of_const (0:ℚ))
+  zero := CauchySequence.mk' (a := fun _: ℕ ↦ 0) (Sequence.isCauchy_of_const _)
 
 abbrev Real := Quotient CauchySequence.instSetoid
 

@@ -142,7 +142,7 @@ abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
 }
 
 instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  where
-  coe := Sequence.ofChapter5Sequence
+  coe Rat.EventuallySteadyapter5Sequence
 
 @[simp]
 theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl

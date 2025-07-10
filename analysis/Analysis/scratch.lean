@@ -1,5 +1,8 @@
 import Mathlib
 
+lemma test (x y z : ℤ) : x * (y + z) = x * y + x * z := by
+  exact?
+
 example (a b c : ℚ) (h1 : a < b) (h2 : b < c) : a < c := by
   linarith
 

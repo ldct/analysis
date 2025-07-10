@@ -26,7 +26,7 @@ the rational numbers that does not reference either absolute value or exponentia
 /--
   This definition needs to be made outside of the Section 4.3 namespace for technical reasons.
 -/
-def Rat.close (ε : ℚ) (x y:ℚ) := |x-y| ≤ ε
+def Rat.Close (ε : ℚ) (x y:ℚ) := |x-y| ≤ ε
 
 
 namespace Section_4_3
@@ -133,10 +133,10 @@ theorem dist_le (x y z:ℚ) : dist x z ≤ dist x y + dist y z := by exact abs_s
   but it is more convenient in Lean to assign a "junk" definition in this case.  But this also
   allows some relaxations of hypotheses in the lemmas that follow.
 -/
-theorem close_iff (ε x y:ℚ): ε.close x y ↔ |x - y| ≤ ε := by rfl
+theorem close_iff (ε x y:ℚ): ε.Close x y ↔ |x - y| ≤ ε := by rfl
 
 /-- Examples 4.3.6 -/
-example : (0.1:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
+example : (0.1:ℚ).Close (0.99:ℚ) (1.01:ℚ) := by
   rw [close_iff]
   norm_num
   have : |(1 : ℚ ) / 50| = 1 / 50 := by norm_num
@@ -144,7 +144,7 @@ example : (0.1:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
   norm_num
 
 /-- Examples 4.3.6 -/
-example : ¬ (0.01:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
+example : ¬ (0.01:ℚ).Close (0.99:ℚ) (1.01:ℚ) := by
   rw [close_iff]
   norm_num
   have : |(1 : ℚ ) / 50| = 1 / 50 := by norm_num
@@ -152,17 +152,17 @@ example : ¬ (0.01:ℚ).close (0.99:ℚ) (1.01:ℚ) := by
   norm_num
 
 /-- Examples 4.3.6 -/
-example (ε : ℚ) (hε : 0 < ε) : ε.close 2 2 := by
+example (ε : ℚ) (hε : 0 < ε) : ε.Close 2 2 := by
   rw [close_iff]
   simp
   positivity
 
-theorem close_refl (x:ℚ) : (0:ℚ).close x x := by
+theorem close_refl (x:ℚ) : (0:ℚ).Close x x := by
   rw [close_iff]
   simp
 
 /-- Proposition 4.3.7(a) / Exercise 4.3.2 -/
-theorem eq_iff_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y := by
+theorem eq_iff_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.Close x y := by
   simp_rw [close_iff]
   constructor
   intro h
@@ -178,41 +178,41 @@ theorem eq_iff_close (x y:ℚ) : x = y ↔ ∀ ε:ℚ, ε > 0 → ε.close x y :
   linarith
 
 /-- Proposition 4.3.7(b) / Exercise 4.3.2 -/
-theorem close_symm (ε x y:ℚ) : ε.close x y ↔ ε.close y x := by
+theorem close_symm (ε x y:ℚ) : ε.Close x y ↔ ε.Close y x := by
   rw [close_iff, close_iff]
   rw [show |x - y| = |y - x| by exact dist_symm x y]
 
 /-- Proposition 4.3.7(c) / Exercise 4.3.2 -/
-theorem close_trans {ε δ x y z:ℚ} (hxy: ε.close x y) (hyz: δ.close y z) :
-    (ε + δ).close x z := by
+theorem close_trans {ε δ x y z:ℚ} (hxy: ε.Close x y) (hyz: δ.Close y z) :
+    (ε + δ).Close x z := by
   rw [close_iff, abs_le] at *
   constructor
   all_goals linarith
 
 /-- Proposition 4.3.7(d) / Exercise 4.3.2 -/
-theorem add_close {ε δ x y z w:ℚ} (hxy: ε.close x y) (hzw: δ.close z w) :
-    (ε + δ).close (x+z) (y+w) := by
+theorem add_close {ε δ x y z w:ℚ} (hxy: ε.Close x y) (hzw: δ.Close z w) :
+    (ε + δ).Close (x+z) (y+w) := by
   rw [close_iff, abs_le] at *
   constructor
   all_goals linarith
 
 /-- Proposition 4.3.7(d) / Exercise 4.3.2 -/
-theorem sub_close {ε δ x y z w:ℚ} (hxy: ε.close x y) (hzw: δ.close z w) :
-    (ε + δ).close (x-z) (y-w) := by
+theorem sub_close {ε δ x y z w:ℚ} (hxy: ε.Close x y) (hzw: δ.Close z w) :
+    (ε + δ).Close (x-z) (y-w) := by
   rw [close_iff, abs_le] at *
   constructor
   all_goals linarith
 
 /-- Proposition 4.3.7(e) / Exercise 4.3.2, slightly strengthened -/
-theorem close_mono {ε ε' x y:ℚ} (hxy: ε.close x y) (hε: ε' ≥  ε) :
-    ε'.close x y := by
+theorem close_mono {ε ε' x y:ℚ} (hxy: ε.Close x y) (hε: ε' ≥  ε) :
+    ε'.Close x y := by
   rw [close_iff, abs_le] at *
   constructor
   all_goals linarith
 
 /-- Proposition 4.3.7(f) / Exercise 4.3.2 -/
-theorem close_between {ε x y z w:ℚ} (hxy: ε.close x y) (hyz: ε.close x z)
-  (hbetween: (y ≤ w ∧ w ≤ z) ∨ (z ≤ w ∧ w ≤ y)) : ε.close x w := by
+theorem close_between {ε x y z w:ℚ} (hxy: ε.Close x y) (hyz: ε.Close x z)
+  (hbetween: (y ≤ w ∧ w ≤ z) ∨ (z ≤ w ∧ w ≤ y)) : ε.Close x w := by
   obtain h | h := hbetween
   rw [close_iff, abs_le] at *
   constructor
@@ -224,8 +224,8 @@ theorem close_between {ε x y z w:ℚ} (hxy: ε.close x y) (hyz: ε.close x z)
   linarith
 
 /-- Proposition 4.3.7(g) / Exercise 4.3.2 -/
-theorem close_mul_right {ε x y z:ℚ} (hxy: ε.close x y) :
-    (ε*|z|).close (x * z) (y * z) := by
+theorem close_mul_right {ε x y z:ℚ} (hxy: ε.Close x y) :
+    (ε*|z|).Close (x * z) (y * z) := by
   rw [close_iff] at *
   rw [show x * z - y * z = (x - y) * z by ring, abs_mul]
   have : 0 < |z| ∨ |z| = 0 := LE.le.gt_or_eq (abs_nonneg z)
@@ -236,8 +236,8 @@ theorem close_mul_right {ε x y z:ℚ} (hxy: ε.close x y) :
   norm_num
 
 /-- Proposition 4.3.7(h) / Exercise 4.3.2 -/
-theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.close x y) (hzw: δ.close z w) :
-    (ε*|z|+δ*|x|+ε*δ).close (x * z) (y * w) := by
+theorem close_mul_mul {ε δ x y z w:ℚ} (hε: ε ≥ 0) (hxy: ε.Close x y) (hzw: δ.Close z w) :
+    (ε*|z|+δ*|x|+ε*δ).Close (x * z) (y * w) := by
   -- The proof is written to follow the structure of the original text, though
   -- on formalization it was revealed that the hypothesis δ ≥ 0 was unnecessary.
   set a := y-x

@@ -21,7 +21,7 @@ Main constructions and results of this section:
 abbrev Rat.close_seq (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
   ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.close (a n) (b n)
 
-abbrev Rat.eventually_close (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
+abbrev Rat.EventuallyClose (ε: ℚ) (a b: Chapter5.Sequence) : Prop :=
   ∃ N, ε.close_seq (a.from N) (b.from N)
 
 namespace Chapter5
@@ -65,18 +65,18 @@ example : (0.1:ℚ).close_seq ((fun n:ℕ ↦ ((-1)^n:ℚ)))
   norm_num
 
 /-- Example 5.2.2 -/
-example : ¬ (0.1:ℚ).steady (fun n:ℕ ↦ ((-1)^n:ℚ))
+example : ¬ (0.1:ℚ).Steady (fun n:ℕ ↦ ((-1)^n:ℚ))
 := by
-  rw [Rat.isSteady_of_coe]
+  rw [Rat.Steady.coe]
   intro h
   specialize h 0 1
   unfold Rat.close at h
   norm_num at h
 
 /-- Example 5.2.2 -/
-example : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
+example : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
 := by
-  rw [Rat.isSteady_of_coe]
+  rw [Rat.Steady.coe]
   intro h
   specialize h 0 1
   unfold Rat.close at h
@@ -87,7 +87,7 @@ example : ¬ (0.1:ℚ).steady ((fun n:ℕ ↦ ((1.1:ℚ) * (-1)^n)):Sequence)
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
 lemma Rat.eventually_close_def (ε: ℚ) (a b: Sequence) :
-    ε.eventually_close a b ↔ ∃ N, ε.close_seq (a.from N) (b.from N) := by rfl
+    ε.EventuallyClose a b ↔ ∃ N, ε.close_seq (a.from N) (b.from N) := by rfl
 
 example (N : ℤ) : (N ≤ N.toNat) := by exact Int.self_le_toNat N
 
@@ -95,7 +95,7 @@ lemma toNat_idemp (n : ℤ) : ((n.toNat):Int).toNat = n.toNat := rfl
 
 /-- Definition 5.2.3 (Eventually ε-close sequences) -/
 lemma Rat.eventually_close_of_coe_coe (ε: ℚ) (a b: ℕ → ℚ) :
-    ε.eventually_close (a:Sequence) (b:Sequence) ↔  ∃ N, ∀ n ≥ N, |a n - b n| ≤ ε := by
+    ε.EventuallyClose (a:Sequence) (b:Sequence) ↔  ∃ N, ∀ n ≥ N, |a n - b n| ≤ ε := by
   constructor
   intro h
   rw [Rat.eventually_close_def] at h
@@ -218,9 +218,9 @@ lemma Sequence.equiv_example :
 
 lemma Sequence.cauchy_of_equiv' {a b: ℕ → ℚ}
   (hab: Sequence.equiv a b)
-  (ha : (a:Sequence).isCauchy)
-: (b:Sequence).isCauchy := by
-  rw [Sequence.isCauchy_of_coe] at *
+  (ha : (a:Sequence).IsCauchy)
+: (b:Sequence).IsCauchy := by
+  rw [Sequence.IsCauchy.coe] at *
   intro ε εpos
   specialize ha (ε/4) (by positivity)
   obtain ⟨ N, hN ⟩ := ha
@@ -265,6 +265,6 @@ lemma Sequence.bounded_of_close' {ε:ℚ} {a b: ℕ → ℚ}
 
 /-- Exercise 5.2.2 -/
 theorem Sequence.bounded_of_close {ε:ℚ} {a b: ℕ → ℚ} (hab: ε.eventually_close a b) :
-    (a:Sequence).isBounded ↔ (b:Sequence).isBounded := by sorry
+    (a:Sequence).IsBounded ↔ (b:Sequence).IsBounded := by sorry
 
 end Chapter5

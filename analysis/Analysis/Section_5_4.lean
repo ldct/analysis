@@ -260,7 +260,7 @@ theorem Real.LIM_of_nonneg {a: ℕ → ℚ} (ha: ∀ n, a n ≥ 0) (hcauchy: (a:
       _ < c := by linarith
       _ ≤ a n - b n := by linarith
       _ ≤ _ := le_abs_self _
-  have claim2 : ¬ (c/2).eventually_close (a:Sequence) (b:Sequence) := by
+  have claim2 : ¬ (c/2).EventuallyClose (a:Sequence) (b:Sequence) := by
     contrapose! claim1
     rw [Rat.eventually_close_iff] at claim1
     obtain ⟨ N, claim1 ⟩ := claim1

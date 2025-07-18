@@ -54,6 +54,9 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     . have hM' : M < 0 := by linarith
       simp [T, Series.partial, hM']
       convert le_ciSup (f := S) ?_ (-1)
+      sorry
+      sorry
+      sorry
       simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
     set Y := Finset.Iic M.toNat
     have hN : ∃ N, ∀ m ∈ Y, f m ≤ N := by
@@ -77,6 +80,9 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     . have hN' : N < 0 := by linarith
       simp [S, Series.partial, hN']
       convert le_ciSup (f := T) ?_ (-1)
+      sorry
+      sorry
+      sorry
       simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
     set X := Finset.Iic N.toNat
     have hM : ∃ M, ∀ n ∈ X, ∃ m, f m = n ∧ m ≤ M := by
@@ -122,6 +128,7 @@ theorem Series.permuted_zeta_2_eq_zeta_2 :
 theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConverges)
   {f: ℕ → ℕ} (hf: Function.Bijective f) :
     (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n) : Series).sum := by
+<<<<<<< HEAD
   -- This proof is written to follow the structure of the original text.
   set L := (a:Series).abs.sum
   have hconv := converges_of_absConverges ha
@@ -187,6 +194,9 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
       simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]; grind
     _ = ε := by ring
 
+=======
+  sorry
+>>>>>>> 8f00b92 (Fill in examples)
 
 /-- Example 7.4.4 -/
 noncomputable abbrev Series.a_7_4_4 : ℕ → ℝ := fun n ↦ (-1:ℝ)^n / (n+2)

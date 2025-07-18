@@ -86,10 +86,21 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: �
   set t := (fun k ↦ 2^k * s.seq (2^k):Series)
   have ht: t.nonneg := by intro n; by_cases h: n ≥ 0 <;> simp [t,h]; grind
   have hmono' : ∀ n ≥ 1, ∀ m ≥ n, s.seq m ≤ s.seq n := by
+<<<<<<< HEAD
     intro n hn m hm; obtain ⟨ k, rfl ⟩ := Int.le.dest hm; clear hm
     induction' k with k hk; simp
     convert (hmono (n+k) (by grind)).trans hk using 2; grind
   have htm : t.m = 0 := by simp [t]
+=======
+    intro n hn m hm
+    obtain ⟨ k, rfl ⟩ := Int.le.dest hm
+    clear hm
+    induction' k with k hk
+    . simp
+    convert (hmono (n+k) (by linarith)).trans hk using 2
+    simp; abel
+  have htm : t.m = 0 := by simp [Series.ofNatFun, t]
+>>>>>>> 8f00b92 (Fill in examples)
   rw [converges_of_nonneg_iff hs, converges_of_nonneg_iff ht]
   set S := s.partial
   set T := t.partial

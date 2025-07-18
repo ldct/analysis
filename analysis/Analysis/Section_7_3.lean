@@ -101,7 +101,7 @@ theorem Series.cauchy_criterion {s:Series} (hm: s.m = 1) (hs:s.nonneg) (hmono: â
     . simp
     convert (hmono (n+k) (by linarith)).trans hk using 2
     simp; abel
-  have htm : t.m = 0 := by simp [t]
+  have htm : t.m = 0 := by simp [Series.ofNatFun, t]
   rw [converges_of_nonneg_iff hs, converges_of_nonneg_iff ht]
   set S := s.partial
   set T := t.partial

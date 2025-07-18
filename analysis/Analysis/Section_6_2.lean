@@ -65,7 +65,6 @@ example : (3:EReal) ≤ (5:EReal) := by
   use (3:ℝ), (5:ℝ)
   norm_cast
 
-
 /-- Examples 6.2.4 -/
 example : (3:EReal) < ⊤ := by
   rw [EReal.lt_iff]
@@ -93,31 +92,74 @@ example : ¬ (3:EReal) ≤ ⊥ := by
   by_contra h
   rw [EReal.le_iff] at h
   simp at h
-  apply EReal.real_neq_neg_infty at h
-  exact h
+  norm_cast at h
 
 #check instCompleteLinearOrderEReal
 
 /-- Proposition 6.2.5(a) / Exercise 6.2.1 -/
-theorem EReal.refl (x:EReal) : x ≤ x := by sorry
+theorem EReal.refl (x:EReal) : x ≤ x := by
+  have := EReal.def x
+  rcases this with h | rfl | rfl
+  . obtain ⟨ y, hy ⟩ := h
+    rw [← hy]
+  norm_num
+  norm_num
 
 /-- Proposition 6.2.5(b) / Exercise 6.2.1 -/
-theorem EReal.trichotomy (x y:EReal) : x < y ∨ x = y ∨ x > y := by sorry
+theorem EReal.trichotomy (x y:EReal) : x < y ∨ x = y ∨ x > y := by
+  rcases EReal.def x with hx | rfl | rfl
+  <;> rcases EReal.def y with hy | rfl | rfl
+  <;> try { obtain ⟨ r, rfl ⟩ := hx; simp }
+  <;> try { obtain ⟨ r, rfl ⟩ := hy; simp }
+  exact lt_trichotomy x y
+  all_goals decide
 
 /-- Proposition 6.2.5(b) / Exercise 6.2.1 -/
-theorem EReal.not_lt_and_eq (x y:EReal) : ¬ (x < y ∧ x = y) := by sorry
+theorem EReal.not_lt_and_eq (x y:EReal) : ¬ (x < y ∧ x = y) := by
+  rcases EReal.def x with hx | rfl | rfl
+  <;> rcases EReal.def y with hy | rfl | rfl
+  <;> try { obtain ⟨ r1, rfl ⟩ := hx; simp }
+  <;> try { obtain ⟨ r2, rfl ⟩ := hy; simp }
+  · obtain ⟨ r1, rfl ⟩ := hx
+    obtain ⟨ r2, rfl ⟩ := hy
+    norm_cast
+    intro h
+    linarith
+  all_goals decide
 
 /-- Proposition 6.2.5(b) / Exercise 6.2.1 -/
-theorem EReal.not_gt_and_eq (x y:EReal) : ¬ (x > y ∧ x = y) := by sorry
+theorem EReal.not_gt_and_eq (x y:EReal) : ¬ (x > y ∧ x = y) := by
+  rcases EReal.def x with hx | rfl | rfl
+  <;> rcases EReal.def y with hy | rfl | rfl
+  <;> try { obtain ⟨ r1, rfl ⟩ := hx; simp }
+  <;> try { obtain ⟨ r2, rfl ⟩ := hy; simp }
+  · obtain ⟨ r1, rfl ⟩ := hx
+    obtain ⟨ r2, rfl ⟩ := hy
+    norm_cast
+    intro h
+    linarith
+  all_goals decide
 
 /-- Proposition 6.2.5(b) / Exercise 6.2.1 -/
-theorem EReal.not_lt_and_gt (x y:EReal) : ¬ (x < y ∧ x > y) := by sorry
+theorem EReal.not_lt_and_gt (x y:EReal) : ¬ (x < y ∧ x > y) := by
+  rcases EReal.def x with hx | rfl | rfl
+  <;> rcases EReal.def y with hy | rfl | rfl
+  <;> try { obtain ⟨ r1, rfl ⟩ := hx; simp }
+  <;> try { obtain ⟨ r2, rfl ⟩ := hy; simp }
+  · obtain ⟨ r1, rfl ⟩ := hx
+    obtain ⟨ r2, rfl ⟩ := hy
+    norm_cast
+    intro h
+    linarith
+  all_goals decide
 
 /-- Proposition 6.2.5(c) / Exercise 6.2.1 -/
-theorem EReal.trans {x y z:EReal} (hxy : x ≤ y) (hyz: y ≤ z) : x ≤ z := by sorry
+theorem EReal.trans {x y z:EReal} (hxy : x ≤ y) (hyz: y ≤ z) : x ≤ z := by
+  exact Preorder.le_trans x y z hxy hyz
 
 /-- Proposition 6.2.5(d) / Exercise 6.2.1 -/
-theorem EReal.neg_of_lt {x y:EReal} (hxy : x ≤ y): -y ≤ -x := by sorry
+theorem EReal.neg_of_lt {x y:EReal} (hxy : x ≤ y): -y ≤ -x := by
+  exact neg_le_neg_iff.mpr hxy
 
 /-- Definition 6.2.6 -/
 theorem EReal.sup_of_bounded_nonempty {E: Set ℝ} (hbound: BddAbove E) (hnon: E.Nonempty) :

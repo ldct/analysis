@@ -206,35 +206,29 @@ The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
 example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by
   intro h
   rw [Rat.Steady.coe] at h
-  specialize h 0
   obtain ⟨ n, hn ⟩ := exists_nat_gt ε
-  specialize h n
-  dsimp at h
+  specialize h 0 n
   unfold Rat.Close at h
   norm_num at h
-  rw [abs_sub_comm] at h
-  have : (2:ℚ)^1 ≤ 2 ^ (n + 1) := by
-    gcongr
-    norm_num
-    omega
-  norm_num at this
-  rw [abs_of_nonneg (by linarith)] at h
-  clear this
-  have : (2:ℚ) ^ (n + 1) - 2 < (n:ℚ) := by linarith
-  clear h hn ε
+  rw [abs_sub_comm, abs_of_nonneg (by
+    have : (2:ℚ)^1 ≤ 2 ^ (n + 1) := by gcongr; norm_num; omega
+    norm_num at this
+    linarith
+  )] at h
   suffices h : (2:ℚ) ^ (n + 1) - 2 ≥ (n:ℚ)
-  linarith
-  clear this
+  · have : (2:ℚ) ^ (n + 1) - 2 < (n:ℚ) := by linarith
+    linarith
+  clear h hn ε
   induction' n with n IH
-  norm_num
+  · norm_num
   rw [show (2:ℚ) ^ (n + 1 + 1) = (2:ℚ) ^ (n + 1) + (2:ℚ) ^ (n + 1) by ring]
   suffices : (2:ℚ) ^ (n + 1) ≥ 1
-  push_cast
-  linarith
+  · push_cast
+    linarith
   rw [show (1:ℚ) = (2:ℚ) ^ 0 by norm_num]
   gcongr
-  norm_num
-  omega
+  · norm_num
+  · omega
 
 /-- Example 5.1.5
 

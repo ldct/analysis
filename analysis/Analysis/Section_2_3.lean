@@ -97,20 +97,6 @@ lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   | inl hn => rw [hn, zero_mul]
   | inr hm => rw [hm, mul_zero]
 
-lemma Nat.factor_pos {n m: Nat} (h: (n * m).IsPos) : n.IsPos := by
-  by_contra n_eq_0
-  unfold Nat.IsPos at n_eq_0
-  rw [not_ne_iff] at n_eq_0
-  rw [n_eq_0, zero_mul] at h
-  unfold Nat.IsPos at h
-  trivial
-
-lemma Nat.factors_pos {n m: Nat} (h: (n * m).IsPos) : n.IsPos ∧ m.IsPos := by
-  constructor
-  exact factor_pos h
-  rw [mul_comm] at h
-  exact factor_pos h
-
 /-- Proposition 2.3.4 (Distributive law)-/
 theorem Nat.mul_add (a b c: Nat) : a * (b + c) = a * b + a * c := by
   -- This proof is written to follow the structure of the original text.

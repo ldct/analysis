@@ -201,7 +201,7 @@ example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence
 
 /-- Example 5.1.5
 
-The sequence 1, 2, 4, 8, ... is not ε-steady for any ε.
+The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
 -/
 example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by
   intro h

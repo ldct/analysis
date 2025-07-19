@@ -210,9 +210,9 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   norm_cast at hq this ha ⊢
   set y := x.root (a*b')
   have h1 : y = (x.root b').root a := by
-    rw [root_root (by linarith) (by linarith) (by linarith), mul_comm]
+    rw [root_root (by linarith) (by linarith) (by linarith), Nat.mul_comm]
   have h2 : y = (x.root b).root a' := by
-    rw [root_root (by linarith) (by linarith) (by linarith), mul_comm, ←hq]
+    rw [root_root (by linarith) (by linarith) (by linarith), Nat.mul_comm, ←hq]
   have h3 : y^a = x.root b' := by
     rw [h1]; apply pow_of_root (root_nonneg (by linarith) (by linarith)) (by linarith)
   have h4 : y^a' = x.root b := by
@@ -220,7 +220,7 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   calc
     _ = (y^a)^a' := by rw [h3]
     _ = y^(a*a') := pow_mul _ _ _
-    _ = y^(a'*a) := by rw [mul_comm]
+    _ = y^(a'*a) := by rw [Nat.mul_comm]
     _ = (y^a')^a := (pow_mul _ _ _).symm
     _ = _ := by rw [h4]
 

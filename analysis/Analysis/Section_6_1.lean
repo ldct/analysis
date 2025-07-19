@@ -108,11 +108,20 @@ lemma Real.eventuallySteady_def (ε: ℝ) (a: Chapter6.Sequence) :
   ε.EventuallySteady a ↔ ∃ N, (N ≥ a.m) ∧ ε.Steady (a.from N) := by rfl
 
 theorem Real.steady_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂) (hsteady: ε₁.Steady a) :
-    ε₂.Steady a := by sorry
+    ε₂.Steady a := by
+  intro n hn m hm
+  specialize hsteady n hn m hm
+  linarith
 
 theorem Real.eventuallySteady_mono {a: Chapter6.Sequence} {ε₁ ε₂: ℝ} (hε: ε₁ ≤ ε₂)
   (hsteady: ε₁.EventuallySteady a) :
-    ε₂.EventuallySteady a := by sorry
+    ε₂.EventuallySteady a := by
+  unfold EventuallySteady at *
+  obtain ⟨ N, hN, hsteady' ⟩ := hsteady
+  use N
+  constructor
+  exact hN
+  exact steady_mono hε hsteady'
 
 namespace Chapter6
 
@@ -123,18 +132,90 @@ abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℝ), ε.EventuallyS
 lemma Sequence.isCauchy_def (a:Sequence) :
   a.IsCauchy ↔ ∀ ε > (0:ℝ), ε.EventuallySteady a := by rfl
 
-/-- This is almost the same as Chapter5.Sequence.IsCauchy.coe -/
-lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
+lemma Real.Steady.coe_from_coe (ε : ℝ) (n₁ : ℕ) (a:ℕ → ℝ) :
+    ε.Steady ((a:Sequence).from n₁) ↔ ∀ n ≥ n₁, ∀ m ≥ n₁, ε.Close (a n) (a m) := by
+  constructor
+  · intro h n hn m hm
+    specialize h n (by simp ; omega) m (by simp ; omega)
+    simp_all [hn, hm, h]
+
+  intro h n hn m hm
+  simp at hn hm
+  lift n to ℕ using (by omega)
+  lift m to ℕ using (by omega)
+  simp_all [hn, hm]
+
+lemma Real.EventuallySteady.coe (ε: ℝ) (a: ℕ → ℝ) :
+  ε.EventuallySteady a ↔ ∃ N:ℕ, ε.Steady ((a:Sequence).from N) := by
+  constructor
+  intro h
+  rw [Real.eventuallySteady_def] at h
+  simp at h
+  obtain ⟨ N, hN, h' ⟩ := h
+  lift N to ℕ using hN
+  use N
+  intro h
+  obtain ⟨ N, h' ⟩ := h
+  rw [Steady.coe_from_coe] at h'
+  use N
+  simp
+  rw [Steady.coe_from_coe]
+  exact h'
+
+lemma Sequence.isCauchy_of_coe (a:ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by
   constructor
-  · intro h ε hε
-    obtain ⟨ N, hN, h' ⟩ := h ε hε
-    lift N to ℕ using hN
-    use N
-    intro j hj k hk
-    simp [Real.steady_def] at h'
-    specialize h' j (by omega) k (by omega)
-    simp_all [hj, hk, h']
+  intro h
+  intro ε hε
+  unfold Sequence.IsCauchy at h
+  specialize h ε hε
+  unfold Real.EventuallySteady at h
+  obtain ⟨ N, hN, h' ⟩ := h
+  lift N to ℕ using hN
+
+  use N
+  intro j hj k hk
+  unfold Real.Steady at h'
+  simp at h'
+  have : max (0 : ℤ) N = N := by omega
+
+  specialize h' j (by omega)
+  specialize h' k (by omega)
+
+  simp [Real.Close] at h'
+  simp [hj, hk] at h'
+  exact h'
+
+  -- other implication
+
+  intro h
+  unfold Sequence.IsCauchy
+  intro ε hε
+  unfold Real.EventuallySteady
+
+  specialize h ε hε
+  obtain ⟨ N, h' ⟩ := h
+  use max N 0
+  constructor
+  · simp
+  unfold Real.Steady
+  intro n hn m hm
+
+  simp at hn hm
+  have npos : 0 ≤ n := by omega
+  have mpos : 0 ≤ m := by omega
+
+  simp [hn, hm, npos, mpos]
+
+  have : n.toNat = n := by omega
+
+  lift n to ℕ using npos
+  lift m to ℕ using mpos
+  specialize h' n (by omega) m (by omega)
+  simp
+
+  exact h'
+
 
   intro h ε hε
   obtain ⟨ N, h' ⟩ := h ε hε
@@ -153,7 +234,30 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℝ) :
     (mk' n₀ a).IsCauchy
-    ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by sorry
+    ↔ ∀ ε > 0, ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N, dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
+  constructor
+  · intro h ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
+    use N
+    dsimp at hN
+    constructor
+    · exact hN
+    intro j hj k hk
+    simp only [Real.Steady, show max n₀ N = N by omega] at h'
+    specialize h' j (by omega) k (by omega)
+    simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
+
+  intro h ε hε
+  obtain ⟨ N, hN, h' ⟩ := h ε hε
+  use max n₀ N
+  constructor
+  · simp
+  intro n hn m hm
+  simp at hn hm
+  simp [hn, hm]
+  specialize h' n (by omega) m (by omega)
+  simp [hn, hm] at h'
+  exact h'
 
 @[coe]
 abbrev Sequence.ofChapter5Sequence (a: Chapter5.Sequence) : Sequence :=
@@ -172,11 +276,40 @@ instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  w
 @[simp]
 theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl
 
+lemma abs_ratCast (q : ℚ) : |(q:ℝ)| = |q| := by
+  norm_cast
+
 theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
-    ε.Steady a ↔ (ε:ℝ).Steady (a:Sequence) := by sorry
+    ε.Steady a ↔ (ε:ℝ).Steady (a:Sequence) := by
+  constructor
+  · intro h
+    intro n hn m hm
+    specialize h n hn m hm
+    simp
+    unfold Rat.Close at h
+    rw [Rat.dist_eq]
+    norm_cast
+
+  intro h
+  unfold Real.Steady at h
+  simp at h
+  intro n hn m hm
+  specialize h n hn m hm
+  rw [Rat.dist_eq] at h
+  unfold Rat.Close
+  rify
+  exact h
+
+theorem test_rw (a : Chapter5.Sequence) (N : ℤ) : ((a.from N):Sequence) = (a:Sequence).from N := by
+  ext i
+  dsimp
+  obtain h | h := Decidable.em (i ≥ max a.n₀ N) <;> simp [h]
 
 theorem Sequence.is_eventuallySteady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
-    ε.EventuallySteady a ↔ (ε:ℝ).EventuallySteady (a:Sequence) := by sorry
+    ε.EventuallySteady a ↔ (ε:ℝ).EventuallySteady (a:Sequence) := by
+  unfold Real.EventuallySteady
+  unfold Rat.EventuallySteady
+  simp_rw [is_steady_of_rat, ← test_rw]
 
 /-- Proposition 6.1.4 -/
 theorem Sequence.isCauchy_of_rat (a: Chapter5.Sequence) : a.IsCauchy ↔ (a:Sequence).IsCauchy := by
@@ -218,11 +351,23 @@ theorem Real.eventuallyClose_def (ε: ℝ) (a: Chapter6.Sequence) (L:ℝ) :
 
 theorem Real.close_seq_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.CloseSeq a L) :
-    ε₂.CloseSeq a L := by sorry
+    ε₂.CloseSeq a L := by
+  unfold Real.CloseSeq at *
+  intro n hn
+  specialize hclose n hn
+  unfold Real.Close at *
+  rw [Real.dist_eq] at *
+  linarith
 
 theorem Real.eventuallyClose_mono {a: Chapter6.Sequence} {ε₁ ε₂ L: ℝ} (hε: ε₁ ≤ ε₂)
   (hclose: ε₁.EventuallyClose a L) :
-    ε₂.EventuallyClose a L := by sorry
+    ε₂.EventuallyClose a L := by
+  unfold Real.EventuallyClose at *
+  obtain ⟨ N, hN, hclose' ⟩ := hclose
+  use N
+  constructor
+  · exact hN
+  exact close_seq_mono hε hclose'
 
 namespace Chapter6
 
@@ -234,18 +379,87 @@ theorem Sequence.tendsTo_def (a:Sequence) (L:ℝ) :
 
 /-- Exercise 6.1.2 -/
 theorem Sequence.tendsTo_iff (a:Sequence) (L:ℝ) :
-  a.TendsTo L ↔ ∀ ε > 0, ∃ N, ∀ n ≥ N, |a n - L| ≤ ε := by sorry
+  a.TendsTo L ↔ ∀ ε > 0, ∃ N, ∀ n ≥ N, |a n - L| ≤ ε := by
+  constructor
+  · intro h ε hε
+    obtain ⟨ N, h1, h2 ⟩ := h ε hε
+    use N
+    intro n hn
+    unfold Real.CloseSeq at h2
+    specialize h2 n
+    simp at h2
+    specialize h2 (by omega) (by linarith)
+    have : a.m ≤ n := by exact Int.le_trans h1 hn
+    simp [this, hn] at h2
+    rw [Real.dist_eq] at h2
+    exact h2
+
+  intro h ε hε
+  specialize h ε hε
+  obtain ⟨ N, h ⟩ := h
+  use (max N a.m)
+  constructor
+  · simp
+  intro n hn
+  simp at hn
+  specialize h n hn.1
+  simp [hn]
+  rw [Real.dist_eq]
+  exact h
+
+theorem Real.CloseSeq.coe (ε : ℝ) (a : ℕ → ℝ) (L : ℝ):
+  (ε.CloseSeq a L) ↔ ∀ n, dist (a n) L ≤ ε := by
+  constructor
+  · intro h n
+    specialize h n
+    simp_all
+  intro h
+  intro n hn
+  simp at hn
+  lift n to ℕ using hn
+  specialize h n
+  simp_all
 
 noncomputable abbrev seq_6_1_6 : Sequence := (fun (n:ℕ) ↦ 1-(10:ℝ)^(-(n:ℤ)-1):Sequence)
 
 /-- Examples 6.1.6 -/
-example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by sorry
+example : (0.1:ℝ).CloseSeq seq_6_1_6 1 := by
+  unfold seq_6_1_6
+  rw [Real.CloseSeq.coe]
+  intro n
+  rw [Real.dist_eq]
+  rw [abs_sub_comm]
+  rw [abs_of_nonneg (by
+    rw [sub_nonneg]
+    rw (occs := .pos [2]) [show (1:ℝ) = 1 - 0 by norm_num]
+    gcongr
+    positivity
+  )]
+  simp
+  rw [show (0.1:ℝ) = (10:ℝ)^(-1:ℤ) by norm_num]
+  gcongr
+  · norm_num
+  omega
 
 /-- Examples 6.1.6 -/
-example : ¬ (0.01:ℝ).CloseSeq seq_6_1_6 1 := by sorry
+example : ¬ (0.01:ℝ).CloseSeq seq_6_1_6 1 := by
+  intro h
+  specialize h 0 (by simp)
+  unfold Real.Close at h
+  unfold seq_6_1_6 at h
+  norm_num at h
+  rw [Real.dist_eq] at h
+  norm_num at h
+  rw [abs_of_nonneg (by positivity)] at h
+  norm_num at h
 
 /-- Examples 6.1.6 -/
-example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by sorry
+example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by
+  use 10
+  constructor
+  simp
+  unfold seq_6_1_6
+  sorry
 
 /-- Examples 6.1.6 -/
 example : seq_6_1_6.TendsTo 1 := by sorry
@@ -348,7 +562,7 @@ theorem Sequence.lim_harmonic :
       assumption
 
 /-- Proposition 6.1.12 / Exercise 6.1.5 -/
-theorem Sequence.Cauchy_of_convergent {a:Sequence} (h:a.Convergent) : a.IsCauchy := by
+theorem Sequence.isCauchy_of_convergent {a:Sequence} (h:a.Convergent) : a.IsCauchy := by
   sorry
 
 /-- Example 6.1.13 -/

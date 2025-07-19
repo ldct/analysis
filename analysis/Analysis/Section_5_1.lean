@@ -201,68 +201,8 @@ example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence
 
 /-- Example 5.1.5
 
-The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
+The sequence 1, 2, 4, 8, ... is not ε-steady for any ε.
 -/
-example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by sorry
-
-/-- Example 5.1.5
-
-The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
--/
-example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
-  rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
-  norm_num
-  positivity
-
-/--
-The sequence 10, 0, 0, ... is 10-steady.
--/
-example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
-  rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
-  -- Split into 4 cases based on whether n and m are 0 or not
-  obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
-
-/-- Example 5.1.5 -/
-example : ¬ (0.5:ℚ).Steady (fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)) := by
-  rw [Rat.Steady.coe]
-  by_contra h
-  specialize h 0 1
-  dsimp at h
-  unfold Rat.Close at h
-  norm_num at h
-
-/-- Example 5.1.5 -/
-example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by
-  rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
-  wlog h : m ≤ n
-  · specialize this m n (by linarith)
-    rwa [abs_sub_comm]
-  rw [show (10: ℚ) ^ (-(m:ℤ) - 1) = (10: ℚ) ^ ((-(m:ℤ)) + (-1))  by congr, ← Section_4_3.zpow_add]
-  rw [show (10: ℚ) ^ (-(n:ℤ) - 1) = (10: ℚ) ^ ((-(n:ℤ)) + (-1))  by congr, ← Section_4_3.zpow_add]
-  rw [show 10 ^ (-(n:ℤ)) * 10 ^ (-1:ℤ) - 10 ^ (-(m:ℤ)) * 10 ^ (-1:ℤ) = (10 ^ (-1:ℤ)) * (10 ^ (-(n:ℤ)) - 10 ^ (-(m:ℤ)):ℚ) by ring]
-  rw [abs_mul]
-  rw [show |(10:ℚ) ^ (-1:ℤ)| = 0.1 by norm_num]
-  suffices : |(10:ℚ) ^ (-(n:ℤ)) - 10 ^ (-(m:ℤ))| ≤ 1
-  linarith
-  have : (10:ℚ) ^ (-(n:ℤ)) ≤ (10:ℚ) ^ (-(m:ℤ)) := by
-    gcongr
-    norm_num
-  rw [abs_sub_comm]
-  rw [abs_of_nonneg (by linarith)]
-  clear this
-  rw [show (1:ℚ) = (10:ℚ)^(0:ℤ) - 0 by norm_num]
-  gcongr
-  norm_num
-  omega
-  positivity
-
-/-- Example 5.1.5 -/
 example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by
   intro h
   rw [Rat.Steady.coe] at h
@@ -296,13 +236,26 @@ example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := b
   norm_num
   omega
 
-/-- Example 5.1.5 -/
+/-- Example 5.1.5
+
+The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
+-/
 example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
   rw [Rat.Steady.coe]
   intro n m
   unfold Rat.Close
   norm_num
   positivity
+
+/--
+The sequence 10, 0, 0, ... is 10-steady.
+-/
+example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
+  rw [Rat.Steady.coe]
+  intro n m
+  unfold Rat.Close
+  -- Split into 4 cases based on whether n and m are 0 or not
+  obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
 
 def TenZeroZeroFun := (fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ))
 
@@ -326,7 +279,6 @@ example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady TenZeroZero := by
   rw [Rat.Steady.coe] at h
   specialize h 0 1
   dsimp at h
->>>>>>> 919091b (Fill in sorries)
   unfold Rat.Close at h
   norm_num at h
   linarith

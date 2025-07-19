@@ -257,13 +257,21 @@ example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
   -- Split into 4 cases based on whether n and m are 0 or not
   obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
 
-def TenZeroZeroFun := (fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ))
+/--
+The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.
+-/
+example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
+  intro h
+  rw [Rat.Steady.coe] at h
+  specialize h 0 1
+  unfold Rat.Close at h
+  norm_num at h
+  linarith
 
 def TenZeroZero := ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence)
 
-example : (10:ℚ).Steady (TenZeroZeroFun:Sequence) := by
+example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
   rw [Rat.Steady.coe]
-  unfold TenZeroZeroFun
   intro n m
   unfold Rat.Close
   obtain h | h := Decidable.em (n = 0)
@@ -273,7 +281,7 @@ example : (10:ℚ).Steady (TenZeroZeroFun:Sequence) := by
     all_goals simp [h, h']
   }
 
-example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady TenZeroZero := by
+example (ε:ℚ) (hε:ε<10): ¬ ε.Steady TenZeroZero := by
   unfold TenZeroZero
   intro h
   rw [Rat.Steady.coe] at h

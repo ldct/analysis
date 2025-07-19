@@ -81,7 +81,7 @@ lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos
   exact add_pos_right (n * m) h₂
 
 /-- Lemma 2.3.3 (Positive natural numbers have no zero divisors) / Exercise 2.3.2. Compare with Mathlib's Nat.mul_eq_zero.  -/
-lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
+lemma Nat.mul_eq_zero (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   constructor
   intro h
   by_contra hnm
@@ -97,13 +97,10 @@ lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   | inl hn => rw [hn, zero_mul]
   | inr hm => rw [hm, mul_zero]
 
-lemma Nat.ne_0 (n: Nat) : ¬ n ≠ 0 ↔ n=0 := by
-  exact not_ne_iff
-
 lemma Nat.factor_pos {n m: Nat} (h: (n * m).IsPos) : n.IsPos := by
   by_contra n_eq_0
   unfold Nat.IsPos at n_eq_0
-  replace n_eq_0 := (Nat.ne_0 n).mp n_eq_0
+  rw [not_ne_iff] at n_eq_0
   rw [n_eq_0, zero_mul] at h
   unfold Nat.IsPos at h
   trivial

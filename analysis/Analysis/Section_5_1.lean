@@ -403,15 +403,9 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     specialize h' j (by omega) k (by omega)
     simp_all [hj, hk, h']
     exact h'
-  -- other implication
 
-  intro h
-  unfold Sequence.IsCauchy
-  intro ε hε
-  unfold Rat.EventuallySteady
-
-  specialize h ε hε
-  obtain ⟨ N, h' ⟩ := h
+  intro h ε hε
+  obtain ⟨ N, h' ⟩ := h ε hε
   use max N 0
   constructor
   · simp

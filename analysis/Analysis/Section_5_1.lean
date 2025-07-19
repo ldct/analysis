@@ -516,14 +516,12 @@ theorem Sequence.IsCauchy.harmonic : (mk' 1 (fun n ↦ (1:ℚ)/n)).IsCauchy := b
   rw [div_le_iff₀ (by positivity), mul_comm, ←div_le_iff₀ hε]
   exact le_of_lt hN
 
-abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :=
+abbrev BoundedBy {n:ℕ} (a: Fin n → ℚ) (M:ℚ) : Prop :=
   ∀ i, |a i| ≤ M
 
 /--
   Definition 5.1.12 (bounded sequences). Here we start sequences from 0 rather than 1 to align
   better with Mathlib conventions.
-
-  -- should we enforce n₀ ≤ i?
 -/
 lemma boundedBy_def {n:ℕ} (a: Fin n → ℚ) (M:ℚ) :
   BoundedBy a M ↔ ∀ i, |a i| ≤ M := by rfl
@@ -624,11 +622,9 @@ example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
   constructor
   · norm_num
   intro i
-  simp
   obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
 
 /-- Example 5.1.13
-Hint: the lemmas `Even.neg_one_pow` and `Odd.neg_one_pow` will be useful
 -/
 example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
   rw [Sequence.IsCauchy.coe]
@@ -638,9 +634,9 @@ example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
   specialize h N (by omega) (N+1) (by omega)
   simp at h
   obtain h' | h' := Decidable.em (Even N)
-  rw [Even.neg_one_pow h', Odd.neg_one_pow (Even.add_one h')] at h
-  unfold Section_4_3.dist at h
-  norm_num at h
+  · rw [Even.neg_one_pow h', Odd.neg_one_pow (Even.add_one h')] at h
+    unfold Section_4_3.dist at h
+    norm_num at h
   have h' : Odd N := by exact Nat.not_even_iff_odd.mp h'
   rw [Odd.neg_one_pow h'] at h
   have : Even (N+1) := by exact Odd.add_one h'

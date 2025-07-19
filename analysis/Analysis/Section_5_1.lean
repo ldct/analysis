@@ -134,8 +134,6 @@ example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
 
 /--
 Compare: if you need to work with `Rat.Steady` on the coercion directly, there will be side conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
-
-simp_all [Rat.Steady, Rat.Close, Sequence.n0_coe, Sequence.eval_coe_at_int]
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
   unfold Rat.Steady Rat.Close
@@ -227,41 +225,6 @@ example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
   unfold Rat.Close
   -- Split into 4 cases based on whether n and m are 0 or not
   obtain h | h := Decidable.em (n = 0) <;> obtain h' | h' := Decidable.em (m = 0) <;> simp [h, h']
-
-
-/--
-The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.
--/
-example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
-  intro h
-  rw [Rat.Steady.coe] at h
-  specialize h 0 1
-=======
--/
-example : (1:ℚ).Steady (fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)) := by
-  rw [Rat.Steady.coe]
-  intro n m
-  obtain h | h := Decidable.em (Even n)
-  obtain h' | h' := Decidable.em (Even m)
-
-  simp [h, h']
-  unfold Rat.Close
-  norm_cast
-
-  simp [h, h']
-  unfold Rat.Close
-  norm_cast
-
-  obtain h' | h' := Decidable.em (Even m)
-
-  simp [h, h']
-  unfold Rat.Close
-  norm_cast
-
-  simp [h, h']
-  unfold Rat.Close
-  norm_cast
-
 
 /-- Example 5.1.5 -/
 example : ¬ (0.5:ℚ).Steady (fun n:ℕ ↦ if Even n then (1:ℚ) else (0:ℚ)) := by

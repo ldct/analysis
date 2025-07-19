@@ -427,40 +427,29 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (mk' n₀ a j) (mk' n₀ a k) ≤ ε := by
   constructor
+  · intro h ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
+    use N
+    dsimp at hN
+    constructor
+    · exact hN
+    intro j hj k hk
+    simp only [Rat.Steady, show max n₀ N = N by omega] at h'
+    specialize h' j (by omega) k (by omega)
+    simp_all [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega]
+    exact h'
+
   intro h ε hε
-  specialize h ε hε
-  obtain ⟨ N, hN, h' ⟩ := h
-  use N
-  dsimp at hN
-  constructor
-  · exact hN
-  intro j hj k hk
-  simp [show j ≥ n₀ by linarith, show k ≥ n₀ by linarith]
-  unfold Rat.Steady at h'
-  dsimp at h'
-  rw [show max n₀ N = N by omega] at *
-  specialize h' j (by omega) k (by omega)
-  simp [show n₀ ≤ j by omega, hj, show n₀ ≤ k by omega, hk] at h'
-  trivial
-
-  intro h
-  intro ε hε
-
-  specialize h ε hε
-  simp at h
-  obtain ⟨ N, hN, h' ⟩ := h
-
+  obtain ⟨ N, hN, h' ⟩ := h ε hε
   use max n₀ N
   constructor
   · simp
   intro n hn m hm
   simp at hn hm
   simp [hn, hm]
-
   specialize h' n (by omega) m (by omega)
   simp [hn, hm] at h'
   exact h'
-
 
 noncomputable def Sequence.sqrt_two : Sequence :=
   (fun n:ℕ ↦ ((⌊ (Real.sqrt 2)*10^n ⌋ / 10^n):ℚ))
@@ -596,15 +585,20 @@ lemma isBounded_iff_of_minimum (m₀ : ℚ) (s : Sequence) :
   positivity
   exact boundedBy_of_boundedBy_of_lt (le_max_right 0 M) h2
 
+/--
+Example 5.1.13
 
-
-
-/-- Example 5.1.13 -/
+The finite sequence 1, -2, 3, -4 is bounded by 4.
+-/
 example : BoundedBy ![1,-2,3,-4] 4 := by
   intro i
   fin_cases i <;> norm_num
 
-/-- Example 5.1.13 -/
+/--
+Example 5.1.13
+
+The infinite sequence 1, -2, 3, -4, ... is unbounded. Left as an exercise.
+-/
 example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by
   by_contra h
   rw [Sequence.IsBounded.coe] at h
@@ -616,7 +610,11 @@ example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by
   rw [abs_of_nonneg (by positivity)] at h2
   linarith
 
-/-- Example 5.1.13 -/
+/--
+Example 5.1.13
+
+The sequence (-1)^n is bounded by 1.
+-/
 example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
   use 1
   constructor
@@ -624,7 +622,10 @@ example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
   intro i
   obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
 
-/-- Example 5.1.13
+/--
+Example 5.1.13
+
+The sequence (-1)^n is not Cauchy.
 -/
 example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
   rw [Sequence.IsCauchy.coe]

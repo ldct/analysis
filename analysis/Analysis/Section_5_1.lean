@@ -318,7 +318,11 @@ lemma Rat.EventuallySteady.coe (ε: ℚ) (a: ℕ → ℚ) :
 
 namespace Chapter5
 
-/-- Example 5.1.7 -/
+/--
+Example 5.1.7
+
+The sequence 1, 1/2, 1/3, ... is not 0.1-steady
+-/
 lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   intro h
   rw [Rat.Steady.coe] at h
@@ -329,6 +333,11 @@ lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ )
   rw [abs_of_nonneg (by positivity)] at h
   norm_num at h
 
+/--
+Example 5.1.7
+
+The sequence a_10, a_11, a_12, ... is 0.1-steady
+-/
 lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
   rw [Rat.Steady]
   intro n hn m hm
@@ -336,20 +345,24 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):S
   lift n to ℕ using (by omega)
   lift m to ℕ using (by omega)
   norm_cast at hn hm
-  simp [hn, hm]
+  simp_all [hn, hm]
   unfold Rat.Close
   wlog h : m ≤ n
-  specialize this m n (by omega) (by omega) (by omega)
-  rwa [abs_sub_comm] at this
+  · specialize this m n (by omega) (by omega) (by omega)
+    rwa [abs_sub_comm] at this
   rw [abs_sub_comm]
   have : ((n:ℚ) + 1)⁻¹ ≤ ((m:ℚ) + 1)⁻¹ := by gcongr
-  rw [abs_of_nonneg (by linarith)]
-  rw [show (0.1:ℚ) = (10:ℚ)⁻¹  - 0 by norm_num]
+  rw [abs_of_nonneg (by linarith), show (0.1:ℚ) = (10:ℚ)⁻¹  - 0 by norm_num]
   gcongr
-  norm_cast
-  omega
+  · norm_cast
+    omega
   positivity
 
+/--
+Example 5.1.7
+
+The sequence 1, 1/2, 1/3, ... is eventually 0.1-steady
+-/
 lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   use 10
   constructor
@@ -399,34 +412,16 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
   use max N 0
   constructor
   · simp
-  unfold Rat.Steady
   intro n hn m hm
-
   simp at hn hm
   have npos : 0 ≤ n := by omega
   have mpos : 0 ≤ m := by omega
-
   simp [hn, hm, npos, mpos]
-
   have : n.toNat = n := by omega
-
   lift n to ℕ using npos
   lift m to ℕ using mpos
   specialize h' n (by omega) m (by omega)
-  simp
-
-  unfold Section_4_3.dist at h'
-  unfold Rat.Close
-  exact h'
-
-example : ((fun _:ℕ ↦ (3:ℚ)):Sequence).IsCauchy := by
-  rw [Sequence.IsCauchy.coe]
-  intro ε hε
-  use 0
-  intro j hj k hk
-  unfold Section_4_3.dist
-  norm_num
-  positivity
+  norm_cast
 
 lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     (mk' n₀ a).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N ≥ n₀, ∀ j ≥ N, ∀ k ≥ N,

@@ -71,7 +71,7 @@ theorem Nat.mul_one (m: Nat) : m * 1 = m := by
   rw [mul_comm, one_mul]
 
 /-- This lemma will be useful to prove Lemma 2.3.3. -/
-lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).isPos := by
+lemma Nat.pos_mul_pos {n m: Nat} (h₁: n.IsPos) (h₂: m.IsPos) : (n * m).IsPos := by
   revert n; apply induction
   intro h
   exfalso
@@ -87,8 +87,8 @@ lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
   by_contra hnm
   rw [not_or] at hnm
   rcases hnm with ⟨ hn, hm ⟩
-  replace hn : n.isPos := by exact hn
-  replace hm : m.isPos := by exact hm
+  replace hn : n.IsPos := by exact hn
+  replace hm : m.IsPos := by exact hm
   have := pos_mul_pos hn hm
   trivial
 
@@ -100,15 +100,15 @@ lemma Nat.mul_eq_zero_iff (n m: Nat) : n * m = 0 ↔ n = 0 ∨ m = 0 := by
 lemma Nat.ne_0 (n: Nat) : ¬ n ≠ 0 ↔ n=0 := by
   exact not_ne_iff
 
-lemma Nat.factor_pos {n m: Nat} (h: (n * m).isPos) : n.isPos := by
+lemma Nat.factor_pos {n m: Nat} (h: (n * m).IsPos) : n.IsPos := by
   by_contra n_eq_0
-  unfold Nat.isPos at n_eq_0
+  unfold Nat.IsPos at n_eq_0
   replace n_eq_0 := (Nat.ne_0 n).mp n_eq_0
   rw [n_eq_0, zero_mul] at h
-  unfold Nat.isPos at h
+  unfold Nat.IsPos at h
   trivial
 
-lemma Nat.factors_pos {n m: Nat} (h: (n * m).isPos) : n.isPos ∧ m.isPos := by
+lemma Nat.factors_pos {n m: Nat} (h: (n * m).IsPos) : n.IsPos ∧ m.IsPos := by
   constructor
   exact factor_pos h
   rw [mul_comm] at h

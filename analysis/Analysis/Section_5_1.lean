@@ -324,11 +324,8 @@ lemma Rat.EventuallySteady.coe (ε: ℚ) (a: ℕ → ℚ) :
 
 namespace Chapter5
 
-def bassel := ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence)
-
 /-- Example 5.1.7 -/
-lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady bassel := by
-  unfold bassel
+lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   intro h
   rw [Rat.Steady.coe] at h
   specialize h 0 3
@@ -338,8 +335,7 @@ lemma Sequence.ex_5_1_7_a : ¬ (0.1:ℚ).Steady bassel := by
   rw [abs_of_nonneg (by positivity)] at h
   norm_num at h
 
-lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (bassel.from 10) := by
-  unfold bassel
+lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
   rw [Rat.Steady]
   intro n hn m hm
   simp at hn hm
@@ -360,10 +356,10 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (bassel.from 10) := by
   omega
   positivity
 
-lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady bassel := by
+lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence) := by
   use 10
   constructor
-  simp [bassel]
+  · simp
   exact ex_5_1_7_b
 
 /--

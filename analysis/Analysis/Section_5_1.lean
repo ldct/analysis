@@ -260,33 +260,10 @@ example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):S
 /--
 The sequence 10, 0, 0, ... is not ε-steady for any smaller value of ε.
 -/
-example (ε:ℚ) (hε:ε<10):  ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
+example (ε:ℚ) (hε:ε<10): ¬ ε.Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
   intro h
   rw [Rat.Steady.coe] at h
   specialize h 0 1
-  unfold Rat.Close at h
-  norm_num at h
-  linarith
-
-def TenZeroZero := ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence)
-
-example : (10:ℚ).Steady ((fun n:ℕ ↦ if n = 0 then (10:ℚ) else (0:ℚ)):Sequence) := by
-  rw [Rat.Steady.coe]
-  intro n m
-  unfold Rat.Close
-  obtain h | h := Decidable.em (n = 0)
-  all_goals {
-    obtain h' | h' := Decidable.em (m = 0)
-    simp [h]
-    all_goals simp [h, h']
-  }
-
-example (ε:ℚ) (hε:ε<10): ¬ ε.Steady TenZeroZero := by
-  unfold TenZeroZero
-  intro h
-  rw [Rat.Steady.coe] at h
-  specialize h 0 1
-  dsimp at h
   unfold Rat.Close at h
   norm_num at h
   linarith

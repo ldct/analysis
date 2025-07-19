@@ -394,29 +394,15 @@ lemma Sequence.IsCauchy.coe (a:ℕ → ℚ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > (0:ℚ), ∃ N, ∀ j ≥ N, ∀ k ≥ N,
     Section_4_3.dist (a j) (a k) ≤ ε := by
   constructor
-  intro h
-  intro ε hε
-  unfold Sequence.IsCauchy at h
-  specialize h ε hε
-  unfold Rat.EventuallySteady at h
-  obtain ⟨ N, hN, h' ⟩ := h
-  lift N to ℕ using hN
-
-  use N
-  intro j hj k hk
-  unfold Rat.Steady at h'
-  simp at h'
-  have : max (0 : ℤ) N = N := by omega
-
-  specialize h' j (by omega)
-  specialize h' k (by omega)
-
-  unfold Rat.Close at h'
-  simp at h'
-  unfold Section_4_3.dist
-  simp [hj, hk] at h'
-  exact h'
-
+  · intro h ε hε
+    obtain ⟨ N, hN, h' ⟩ := h ε hε
+    lift N to ℕ using hN
+    use N
+    intro j hj k hk
+    simp [Rat.steady_def] at h'
+    specialize h' j (by omega) k (by omega)
+    simp_all [hj, hk, h']
+    exact h'
   -- other implication
 
   intro h

@@ -717,30 +717,22 @@ theorem finitePrefix (f : ℕ → ℚ) (N : ℕ) : ∃ B ≥ 0, ∀ n : ℕ, n <
   exact fun n a ↦ le_sup_of_le_left (h n a)
 
 theorem test (s : Sequence): ∃ (M:ℚ), M ≥ 0 ∧ ∀ i:ℤ, i ≤ 0 → |s i| ≤ M := by
-  obtain h | h := Decidable.em (0 < s.n₀)
-  · use 0
-    constructor
-    · norm_num
+  by_cases 0 < s.n₀
+  . use 0, by norm_num
     intro i _
-    simp [h, s.vanish i (by omega)]
+    simp [s.vanish i (by omega)]
 
   obtain ⟨ n₀', h ⟩ := show ∃ n₀' : ℕ, s.n₀ = -n₀' by use (-s.n₀).toNat; simp_all
   obtain ⟨ B, h1, h2 ⟩ := finitePrefix (fun i ↦ s (s.n₀ + i)) (n₀' + 1)
-  use B
-  constructor
-  . exact h1
+  use B, h1
   rw [h] at h2
   intro i hi
 
-  obtain h | h3 := Decidable.em (i < s.n₀)
+  by_cases (i < s.n₀)
   · simp [s.vanish i (by omega), h1]
 
   specialize h2 (n₀' + i).toNat (by omega)
-  simp at h2
-  rw [Int.eq_neg_comm] at h
-  simp [h, h3] at h2
-  have : -s.n₀ + i ≥ 0 := by linarith
-  rw [max_eq_left (by linarith)] at h2
+  rw [Int.ofNat_toNat, max_eq_left (by linarith)] at h2
   ring_nf at h2
   exact h2
 
@@ -754,21 +746,17 @@ lemma Sequence.isBounded_of_isCauchy {s:Sequence} (h: s.IsCauchy) : s.IsBounded 
   obtain ⟨ B, h4, h5 ⟩  := finitePrefix (fun n ↦ s.seq n) N.toNat
 
   have lt_N_bound (i : ℤ) (hi : i < N) : |s.seq i| ≤ max M B := by
-    obtain h' | h' := show (i < 0) ∨ (0 ≤ i) by omega
+    obtain _ | _ := show (i < 0) ∨ (0 ≤ i) by omega
     · linarith [show M ≤ max M B by exact le_max_left M B, h2 i (by omega)]
-    lift N to ℕ using (by omega)
     specialize h5 i.toNat (by omega)
-    simp [h'] at h5
-    linarith [le_max_right M B]
+    simp_all [le_max_right M B]
 
   have ge_n_bound (j : ℤ) (hj : j ≥ N) : |s.seq j| ≤ |s.seq N| + 1 := by calc
       _ = |s.seq N + (s.seq j - s.seq N)| := by congr; ring
       _ ≤ |s.seq N| + |s.seq j - s.seq N| := abs_add (s.seq N) (s.seq j - s.seq N)
       _ ≤ _ := by gcongr ;simp_all [abs_sub_comm, h j hj]
 
-  use max (max M B) (|s.seq N| + 1)
-  constructor
-  . positivity
+  use max (max M B) (|s.seq N| + 1), (by positivity)
 
   intro i
   by_cases (i < N)

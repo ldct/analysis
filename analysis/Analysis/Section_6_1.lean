@@ -210,9 +210,6 @@ instance Chapter5.Sequence.inst_coe_sequence : Coe Chapter5.Sequence Sequence  w
 @[simp]
 theorem Chapter5.coe_sequence_eval (a: Chapter5.Sequence) (n:ℤ) : (a:Sequence) n = (a n:ℝ) := rfl
 
-lemma abs_ratCast (q : ℚ) : |(q:ℝ)| = |q| := by
-  norm_cast
-
 theorem Sequence.is_steady_of_rat (ε:ℚ) (a: Chapter5.Sequence) :
     ε.Steady a ↔ (ε:ℝ).Steady (a:Sequence) := by
   constructor

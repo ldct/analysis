@@ -197,7 +197,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
     exact upperBound_upper (le_of_lt hm2) hy
   rw [claim4]
   apply LIM_of_le _ claim5
-  solve_by_elim [IsCauchy.sub]
+  solve_by_elim [Sequence.IsCauchy.sub]
 
 /-- A bare-bones extended real class to define supremum. -/
 inductive ExtendedReal where

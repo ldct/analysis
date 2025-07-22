@@ -636,7 +636,6 @@ theorem Real.zero_mul (a:Real) : (0:Real) * a = 0 := by
   ext i
   simp
 
-theorem test (z:ℤ) : IntCast.intCast z = (z:Real) := by norm_cast
 
 /-- Proposition 5.3.11 (laws of algebra) -/
 noncomputable instance Real.instCommRing : CommRing Real where
@@ -668,9 +667,8 @@ noncomputable instance Real.instCommRing : CommRing Real where
     norm_cast
   intCast_negSucc := by
     intro n
-    rw [test]
-    rw [Real.natCast_eq]
-    rw [Real.neg_ratCast]
+    have test' (z:ℤ) : IntCast.intCast z = (z:Real) := by norm_cast
+    rw [test', Real.natCast_eq, Real.neg_ratCast]
     congr
 
 abbrev Real.ratCast_hom : ℚ →+* Real where

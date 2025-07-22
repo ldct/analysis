@@ -689,7 +689,6 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   convert h2
   simp [hm]
 
-
 def max_prefix : ((ℕ → ℚ)) → ℕ → ℚ
 | _, 0   => 0
 | f, x+1 => max (f x) (max_prefix f x)
@@ -697,77 +696,51 @@ def max_prefix : ((ℕ → ℚ)) → ℕ → ℚ
 theorem mp_increasing (f : ℕ → ℚ) (a : ℕ) (b : ℕ) (hi : a < b): f a ≤ max_prefix f b := by
   induction b
   case zero =>
-    exfalso
-    exact Nat.not_succ_le_zero a hi
+    omega
   case succ b IH =>
-    unfold max_prefix
-    have a_cases : a < b ∨ a = b := Nat.lt_succ_iff_lt_or_eq.mp hi
-    cases' a_cases with p q
-    apply IH at p
-    exact le_max_of_le_right p
-    rw [q]
-    exact le_max_left (f b) (max_prefix f b)
+    rw [max_prefix, le_sup_iff]
+    obtain p | q := show a < b ∨ a = b by omega
+    . right; exact IH p
+    . left; rw [q]
 
--- Any finite prefix of a sequence has an upper bound
-theorem FinitePrefixMax (f : ℕ → ℚ) (N : ℕ) : ∃ B, ∀ n : ℕ, n < N → f n ≤ B := by
+theorem finitePrefix' (f : ℕ → ℚ) (N : ℕ) : ∃ B, ∀ n : ℕ, n < N → f n ≤ B := by
   use max_prefix f N
   intro n hnB
   apply mp_increasing
   exact hnB
 
--- Any finite prefix of a sequence is bounded in magnitude
-theorem FinitePrefixMax' (f : ℕ → ℚ) (N : ℕ) : ∃ B ≥ 0, ∀ n : ℕ, n < N → |f n| ≤ B := by
-  have ⟨ B, h ⟩ := FinitePrefixMax (fun n ↦ |f n|) N
+theorem finitePrefix (f : ℕ → ℚ) (N : ℕ) : ∃ B ≥ 0, ∀ n : ℕ, n < N → |f n| ≤ B := by
+  have ⟨ B, h ⟩ := finitePrefix' (fun n ↦ |f n|) N
   use (max B 0)
   constructor
   . positivity
   exact fun n a ↦ le_sup_of_le_left (h n a)
 
-theorem test (s : Sequence): ∃ (M:ℚ), M ≥ 0 ∧ ∀ i:ℤ, i < 0 → |s i| ≤ M := by
+theorem test (s : Sequence): ∃ (M:ℚ), M ≥ 0 ∧ ∀ i:ℤ, i ≤ 0 → |s i| ≤ M := by
   obtain h | h := Decidable.em (0 < s.n₀)
   · use 0
     constructor
     · norm_num
-    simp [h]
-    intro i hi
-    exact s.vanish i (by omega)
+    intro i _
+    simp [h, s.vanish i (by omega)]
 
-  have : ∃ n₀' : ℕ, s.n₀ = -n₀' := by
-    use (-s.n₀).toNat
-    simp at h
-    simp [h]
-  obtain ⟨ n₀', h ⟩ := this
-  have := FinitePrefixMax' (fun i ↦ s (s.n₀ + i)) n₀'
-  simp [h] at this
-  obtain ⟨ B, h1, h2 ⟩ := this
+  obtain ⟨ n₀', h ⟩ := show ∃ n₀' : ℕ, s.n₀ = -n₀' by use (-s.n₀).toNat; simp_all
+  obtain ⟨ B, h1, h2 ⟩ := finitePrefix (fun i ↦ s (s.n₀ + i)) (n₀' + 1)
   use B
   constructor
   . exact h1
+  rw [h] at h2
   intro i hi
 
   obtain h | h3 := Decidable.em (i < s.n₀)
-  · have := s.vanish i (by omega)
-    simp [this]
-    exact h1
-
-  have : ∃ i' : ℕ, i = -i' := by
-    use (-i).toNat
-    simp [hi]
-    have := show -i ≥ 0 by linarith
-    have : max (-i) 0 = -i := by exact Int.max_eq_left this
-    exact Int.eq_neg_comm.mp this
-  obtain ⟨ i', h2' ⟩ := this
+  · simp [s.vanish i (by omega), h1]
 
   specialize h2 (n₀' + i).toNat (by omega)
   simp at h2
-  have : (n₀' : ℤ) = -s.n₀ := by
-    simp [h]
-  rw [this] at h2
-  simp [h3] at h2
+  rw [Int.eq_neg_comm] at h
+  simp [h, h3] at h2
   have : -s.n₀ + i ≥ 0 := by linarith
-  have : max (-s.n₀ + i) 0 = -s.n₀ + i := by
-    exact Int.max_eq_left this
-  rw [this] at h2
+  rw [max_eq_left (by linarith)] at h2
   ring_nf at h2
   exact h2
 
@@ -777,65 +750,29 @@ lemma Sequence.isBounded_of_isCauchy {s:Sequence} (h: s.IsCauchy) : s.IsBounded 
   obtain ⟨ N, h1, h ⟩ := h
   specialize h N (by omega)
 
-  have := test s
-  obtain ⟨ M, hM, h2 ⟩ := this
+  obtain ⟨ M, hM, h2 ⟩ := test s
+  obtain ⟨ B, h4, h5 ⟩  := finitePrefix (fun n ↦ s.seq n) N.toNat
 
-  have : ∃ M ≥ 0, ∀ i ≤ 0, |s.seq i| ≤ M := by
-    use max M |s 0|
-    constructor
-    . positivity
-    intro i hi
-    obtain h | h := Decidable.em (i < 0)
-    specialize h2 i  (by omega)
-    have : M ≤ max M |s.seq 0| := by exact le_max_left M |s 0|
-    linarith
-    have : i = 0 := by omega
-    rw [this]
-    exact le_max_right M |s 0|
-  obtain ⟨ M', hM', h3 ⟩ := this
-  clear hM h2 M
-
-  obtain ⟨ B, h4, h5 ⟩  := FinitePrefixMax' (fun n ↦ s.seq n) N.toNat
-
-  have : ∀ i < N, |s.seq i| ≤ max M' B := by
-    intro i hi
-    have := Decidable.em (i < 0)
-    obtain h' | h' := this
-    · specialize h3 i (by omega)
-      simp [h'] at h3
-      have : M' ≤ max M' B := by exact le_max_left M' B
-      linarith
-    simp at h'
+  have lt_N_bound (i : ℤ) (hi : i < N) : |s.seq i| ≤ max M B := by
+    obtain h' | h' := show (i < 0) ∨ (0 ≤ i) by omega
+    · linarith [show M ≤ max M B by exact le_max_left M B, h2 i (by omega)]
     lift N to ℕ using (by omega)
     specialize h5 i.toNat (by omega)
     simp [h'] at h5
-    have : B ≤ max M' B := by exact le_max_right M' B
-    linarith
+    linarith [le_max_right M B]
 
-  clear h5
-  clear h4
-  clear h3
+  have ge_n_bound (j : ℤ) (hj : j ≥ N) : |s.seq j| ≤ |s.seq N| + 1 := by calc
+      _ = |s.seq N + (s.seq j - s.seq N)| := by congr; ring
+      _ ≤ |s.seq N| + |s.seq j - s.seq N| := abs_add (s.seq N) (s.seq j - s.seq N)
+      _ ≤ _ := by gcongr ;simp_all [abs_sub_comm, h j hj]
 
-  have bound1 : ∀ j ≥ N, |s.seq j| ≤ |s.seq N| + 1 := by
-    intro j hj
-    specialize h j hj
-    rw [show s.seq j = s.seq N + (s.seq j - s.seq N) by ring]
-    have := abs_add (s.seq N) (s.seq j - s.seq N)
-    calc
-      _ ≤ |s.seq N| + |s.seq j - s.seq N| := this
-      _ ≤ |s.seq N| + 1 := by
-        gcongr
-        rw [abs_sub_comm] at h
-        linarith
-
-  use max (max M' B) (|s.seq N| + 1)
+  use max (max M B) (|s.seq N| + 1)
   constructor
   . positivity
+
   intro i
-  obtain h | h := Decidable.em (i < N)
-  · specialize this i h
-    exact le_max_of_le_left this
-  specialize bound1 i (by omega)
-  exact le_max_of_le_right bound1
+  by_cases (i < N)
+  · simp [lt_N_bound i (by omega)]
+  · simp [ge_n_bound i (by omega)]
 
 end Chapter5

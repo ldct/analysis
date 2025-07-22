@@ -276,7 +276,7 @@ lemma Sequence.bounded_of_close' {ε:ℚ} {a b: ℕ → ℚ}
   rw [BoundedBy_of_coe] at hM2
 
   -- need to bound the finite b_0 ... b_n₀
-  obtain ⟨ M3, _, hM3 ⟩  := FinitePrefixMax' b n₀
+  obtain ⟨ M3, _, hM3 ⟩  := finitePrefix b n₀
   use max |M3| (M + ε)
   constructor
   positivity

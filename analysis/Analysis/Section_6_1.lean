@@ -156,7 +156,8 @@ lemma Real.EventuallySteady.coe (ε: ℝ) (a: ℕ → ℝ) :
   rw [Steady.coe_from_coe]
   exact h'
 
-lemma Sequence.isCauchy_of_coe (a:ℕ → ℝ) :
+/-- This is almost the same as Chapter5.Sequence.IsCauchy.coe -/
+lemma Sequence.IsCauchy.coe (a:ℕ → ℝ) :
     (a:Sequence).IsCauchy ↔ ∀ ε > 0, ∃ N, ∀ j ≥ N, ∀ k ≥ N, dist (a j) (a k) ≤ ε := by
   constructor <;> intro h ε hε
   · obtain ⟨ N, hN, h' ⟩ := h ε hε

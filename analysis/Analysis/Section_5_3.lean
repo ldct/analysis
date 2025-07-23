@@ -1,6 +1,7 @@
 import Mathlib.Tactic
 import Analysis.Section_5_2
 import Mathlib.Algebra.Group.MinimalAxioms
+import Mathlib.Data.Int.Log
 
 
 /-!
@@ -389,6 +390,9 @@ theorem Real.LIM.zero : LIM (fun _ ↦ (0:ℚ)) = 0 := by
 instance Real.instIntCast : IntCast Real where
   intCast n := ((n:ℚ):Real)
 
+theorem Real.intCast_def (n:ℤ) : (n:Real) = ((n:ℚ):Real) := by
+  norm_cast
+
 /-- ratCast distributes over addition -/
 theorem Real.ratCast_add (a b:ℚ) : (a:Real) + (b:Real) = (a+b:ℚ) := by
   rw [ratCast_def, ratCast_def, ratCast_def]
@@ -703,14 +707,24 @@ example : BoundedAwayZero (fun n ↦ (-1)^n) := by
 example : ¬ BoundedAwayZero (fun n ↦ 10^(-(n:ℤ)-1)) := by
   by_contra h
   obtain ⟨ c, h1, h2 ⟩ := h
-  obtain ⟨ c1, hc1 ⟩  := exists_nat_gt c
-  specialize h2 c1
   dsimp at h2
+  obtain ⟨ c1, hc1 ⟩ := exists_nat_gt (-(Int.log 10 c))
+  specialize h2 c1
   rw [abs_of_nonneg (by positivity)] at h2
-  sorry
+  have : -(c1:ℤ) - 1 ≥ Int.log 10 c := by
+    have : c ≥ (10:ℚ)^(Int.log 10 c) := by exact Int.zpow_log_le_self (by norm_num) h1
+    have : (10:ℚ)^(-(c1:ℤ)-1) ≥ (10:ℚ)^(Int.log 10 c) := by linarith
+    simp at this
+    exact this
+  linarith
 
 /-- Examples 5.3.13 -/
-example : ¬ BoundedAwayZero (fun n ↦ 1 - 10^(-(n:ℤ))) := by sorry
+example : ¬ BoundedAwayZero (fun n ↦ 1 - 10^(-(n:ℤ))) := by
+  by_contra h
+  obtain ⟨ c, h1, h2 ⟩ := h
+  specialize h2 0
+  simp at h2
+  linarith
 
 /-- Examples 5.3.13 -/
 example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by
@@ -727,7 +741,19 @@ example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by
   omega
 
 /-- Examples 5.3.13 -/
-example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by sorry
+example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by
+  by_contra h
+  rw [Sequence.IsBounded.coe] at h
+  obtain ⟨ M, hM, hB ⟩ := h
+  have : M > 0 := by sorry
+  obtain ⟨ M', h1 ⟩ := exists_nat_gt (Int.log 10 M)
+  specialize hB M'
+  rw [abs_of_nonneg (by positivity)] at hB
+  have : M ≥ (10:ℚ)^(Int.log 10 M) := by
+    apply Int.zpow_log_le_self
+    norm_num
+    positivity
+  sorry
 
 /-- Lemma 5.3.14 -/
 theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
@@ -914,27 +940,79 @@ noncomputable instance Real.instField : Field Real where
     exact self_mul_inv ha
   inv_zero := inv_zero
   ratCast_def := by
+    intro q
+    rw [ratCast_def]
+    rw [natCast_eq, ratCast_def]
     sorry
   qsmul := _
   nnqsmul := _
 
-theorem Real.mul_right_cancel₀ {x y z:Real} (hz: z ≠ 0) (h: x * z = y * z) : x = y := by sorry
+theorem Real.mul_right_cancel₀' {x y z:Real} (hz: z ≠ 0) (h: x * z = y * z) : x = y := by
+  have : (x * z) * z⁻¹ = (y * z) * z⁻¹ := by congr
+  rw [show x * z * z⁻¹ = x * (z * z⁻¹) by ring] at this
+  rw [show y * z * z⁻¹ = y * (z * z⁻¹) by ring] at this
+  rw [self_mul_inv hz] at this
+  ring_nf at this
+  exact this
+
+theorem Real.mul_right_cancel₀ {x y z:Real} (hz: z ≠ 0) (h: x * z = y * z) : x = y := by
+  field_simp [hz] at h
+  exact h
+
 
 theorem Real.mul_right_nocancel : ¬ ∀ (x y z:Real), (hz: z = 0) → (x * z = y * z) → x = y := by
-  sorry
+  intro h
+  specialize h 1 2 0 (by rfl) (by norm_num)
+  rw [show (1:Real) = (1:ℚ) by norm_cast] at h
+  rw [show (2:Real) = (2:ℚ) by norm_cast] at h
+  rw [ratCast_inj] at h
+  norm_num at h
 
 /-- Exercise 5.3.4 -/
 theorem Real.equiv_of_bounded {a b:ℕ → ℚ} (ha: (a:Sequence).IsBounded) (hab: Sequence.Equiv a b) :
     (b:Sequence).IsBounded := by sorry
 
-/-- Exercise 5.3.5 -/
-theorem IsCauchy.harmonic : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Sequence).IsCauchy := by sorry
+/--
+Exercise 5.3.5
+-/
+theorem Sequence.IsCauchy.harmonic' : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Sequence).IsCauchy := by
+  rw [Sequence.IsCauchy.coe]
+  intro ε hε
+  -- We go by reverse from the book - first choose N such that N > 1/ε
+  obtain ⟨ N, hN : N > 1/ε ⟩ := exists_nat_gt (1 / ε)
+  use N
+  have hN' : N > 0 := by
+    have : (1/ε) > 0 := by positivity
+    have hN := this.trans hN
+    norm_cast at *
+
+  intro j hj k hk
+  simp [show j ≥ 1 by linarith, show k ≥ 1 by linarith]
+
+  have hdist : Section_4_3.dist ((1:ℚ)/(j+1)) ((1:ℚ)/(k+1)) ≤ (1:ℚ)/N := by
+    rw [Section_4_3.dist_eq, abs_le']
+    /-
+    We establish the following bounds:
+    - 1/j ∈ [0, 1/N]
+    - 1/k ∈ [0, 1/N]
+    These imply that the distance between 1/j and 1/k is at most 1/N - when they are as "far apart" as possible.
+    -/
+    have hj'' : 1/(j+1) ≤ (1:ℚ)/N := by gcongr; norm_cast; omega
+    have hj''' : (0:ℚ) ≤ 1/(j+1) := by positivity
+    have hk'' : 1/(k+1) ≤ (1:ℚ)/N := by gcongr; norm_cast; omega
+    have hk''' : (0:ℚ) ≤ 1/(k+1) := by positivity
+    constructor <;> linarith
+  convert hdist.trans _ using 2
+  . simp
+  . simp
+  rw [div_le_iff₀ (by positivity), mul_comm, ←div_le_iff₀ hε]
+  exact le_of_lt hN
 
 /-- Exercise 5.3.5 -/
 theorem Real.LIM.harmonic : LIM (fun n ↦ 1/((n:ℚ)+1)) = 0 := by
   rw [show (0:Real) = (0:ℚ) by norm_cast]
   rw [Real.ratCast_def]
-  rw [LIM_eq_LIM (IsCauchy.harmonic) (Sequence.IsCauchy.const 0)]
+  rw [LIM_eq_LIM (Sequence.IsCauchy.harmonic') (Sequence.IsCauchy.const 0)]
   unfold Sequence.Equiv
   intro ε hε
   rw [Rat.eventually_close_of_coe_coe]

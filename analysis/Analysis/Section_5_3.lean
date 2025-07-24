@@ -941,8 +941,10 @@ noncomputable instance Real.instField : Field Real where
   inv_zero := inv_zero
   ratCast_def := by
     intro q
+
     rw [ratCast_def]
     rw [natCast_eq, ratCast_def]
+    rw [intCast_def, ratCast_def]
     sorry
   qsmul := _
   nnqsmul := _

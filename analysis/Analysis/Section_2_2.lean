@@ -197,7 +197,7 @@ instance Nat.instLE : LE Nat where
 /-- Definition 2.2.11 (Ordering of the natural numbers).
     This defines the `<` notation on the natural numbers. -/
 instance Nat.instLT : LT Nat where
-  lt n m := Nat.lt n m
+  lt n m := n ≤ m ∧ n ≠ m
 
 lemma Nat.le_iff (n m:Nat) : n ≤ m ↔ ∃ a:Nat, m = n + a := by rfl
 

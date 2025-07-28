@@ -108,7 +108,7 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
   have hx₀ : x₀ ∈ E := Set.Nonempty.some_mem hE
 
   set ε := ((1/(n+1):ℚ):Real)
-  have hpos : ε.isPos := by simp [isPos_iff, ε, ←lt_of_coe]; positivity
+  have hpos : ε.IsPos := by simp [isPos_iff, ε, ←lt_of_coe]; positivity
   apply existsUnique_of_exists_of_unique
   . rw [bddAbove_def] at hbound; obtain ⟨ M, hbound ⟩ := hbound
     obtain ⟨ K, _, hK ⟩ := le_mul hpos M
@@ -176,7 +176,8 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set S := LIM a
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM.harmonic
-    simp [←LIM_sub claim3 hb, S, this]
+    rw [← LIM_sub claim3 hb]
+    simp [S, this]
   use S
   rw [isLUB_def, upperBound_def]
   constructor
@@ -267,7 +268,7 @@ theorem Real.exist_sqrt_two : ∃ x:Real, x^2 = 2 := by
   have claim3 : IsLUB E x := by solve_by_elim [ExtendedReal.sup_of_bounded]
   have claim4 : x ≥ 1 := by rw [isLUB_def, upperBound_def] at claim3; solve_by_elim [claim3.1]
   have claim5 : x ≤ 2 := by rw [isLUB_def] at claim3; solve_by_elim [claim3.2]
-  have claim6 : x.isPos := by rw [isPos_iff]; linarith
+  have claim6 : x.IsPos := by rw [isPos_iff]; linarith
   use x
   rcases trichotomous' (x^2) 2 with h | h | h
   . have claim11: ∃ ε, 0 < ε ∧ ε < 1 ∧ x^2 - 4*ε > 2 := by

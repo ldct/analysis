@@ -76,7 +76,11 @@ lemma Nat.add_succ (n m:Nat) : n + (m++) = (n + m)++ := by
 
 /-- n++ = n + 1 (Why?). Compare with Mathlib's `Nat.succ_eq_add_one` -/
 theorem Nat.succ_eq_add_one (n:Nat) : n++ = n + 1 := by
-  sorry
+  revert n
+  apply induction
+  decide
+  intro n ih
+  rw [succ_add, ih]
 
 /-- Proposition 2.2.4 (Addition is commutative). Compare with Mathlib's `Nat.add_comm` -/
 theorem Nat.add_comm (n m:Nat) : n + m = m + n := by
@@ -90,7 +94,11 @@ theorem Nat.add_comm (n m:Nat) : n + m = m + n := by
 /-- Proposition 2.2.5 (Addition is associative) / Exercise 2.2.1
     Compare with Mathlib's `Nat.add_assoc`. -/
 theorem Nat.add_assoc (a b c:Nat) : (a + b) + c = a + (b + c) := by
-  sorry
+  revert a; apply induction
+  rw [zero_add, zero_add]
+  intro a IH
+  rw [succ_add, succ_add, succ_add]
+  rw [IH]
 
 /-- Proposition 2.2.6 (Cancellation law).
     Compare with Mathlib's `Nat.add_left_cancel`. -/
@@ -105,10 +113,13 @@ theorem Nat.add_left_cancel (a b c:Nat) (habc: a + b = a + c) : b = c := by
   replace hbc := succ_cancel hbc
   exact ih hbc
 
+/-- (Not from textbook)
 
-/-- (Not from textbook) Nat can be given the structure of a commutative additive monoid.
-This permits tactics such as `abel` to apply to the Chapter 2 natural numbers. -/
-instance Nat.addCommMonoid : AddCommMonoid Nat where
+Nat can be given the structure of a commutative additive monoid.
+
+This permits tactics such as `abel` to apply to the Chapter 2 natural numbers. `abel` proves any equalities (aka identities) that hold in a commutative additive monoid.
+-/
+instance Nat.instAddCommMonoid : AddCommMonoid Nat where
   add_assoc := add_assoc
   add_comm := add_comm
   zero_add := zero_add
@@ -118,6 +129,23 @@ instance Nat.addCommMonoid : AddCommMonoid Nat where
 /-- This illustration of the `abel` tactic is not from the
     textbook. -/
 example (a b c d:Nat) : (a+b)+(c+0+d) = (b+c)+(d+a) := by abel
+
+-- This is the instance we just defined.
+#synth AddCommMonoid Nat
+
+-- Lean knows that every `AddCommMonoid` is also an `AddCommSemigroup`.
+#synth AddCommSemigroup Nat
+
+/-- Because of the instances we have defined, Mathlib knows the definition of and even natural number and relevant theorems for `Nat`. -/
+example : Even (6:Nat) := by use 3; rfl
+example (a b : Nat) (h1 : Even a) (h2 : Even b) : Even (a + b) := Even.add h1 h2
+
+/- (More notes on algebraic type classes)
+
+In Section 2.3, we will define multiplication, prove that `Nat` is in fact a commutative semiring (`CommSemiRing`), and describe the corresponding `ring` tactic; since all semirings are additive monoids, `abel` is a weaker tactic and you will see `ring` used in contexts where `abel` is actually sufficient.
+
+The study of these algebraic structures and their relations is not a focus of the textbook; however, Mathlib uses them extensively for stating theorems, notation, and tactics, so it is useful to know the important structures.
+-/
 
 /-- Definition 2.2.7 (Positive natural numbers).-/
 def Nat.IsPos (n:Nat) : Prop := n ≠ 0
@@ -165,10 +193,24 @@ extracts a witness `x` and a proof `hx : P x` of the property from a hypothesis 
 
 /-- Lemma 2.2.10 (unique predecessor) / Exercise 2.2.2 -/
 lemma Nat.uniq_succ_eq (a:Nat) (ha: a.IsPos) : ∃! b, b++ = a := by
-  sorry
+  revert a; apply induction
+
+  . intro h
+    exfalso
+    rw [Nat.isPos_iff] at h
+    trivial
+
+  intro a IH h
+  use a
+  constructor
+  . dsimp
+
+  dsimp
+  intro y hy
+  exact succ_cancel hy
 
 /-- Definition 2.2.11 (Ordering of the natural numbers).
-    This defines the `≤` operation on the natural numbers. -/
+    This defines the `≤` notation on the natural numbers. -/
 instance Nat.instLE : LE Nat where
   le n m := ∃ a:Nat, m = n + a
 
@@ -208,27 +250,70 @@ example : (8:Nat) > 5 := by
   decide
 
 /-- Compare with Mathlib's `Nat.lt_succ_self`. -/
+theorem Nat.self_ne_succ (n:Nat) : n ≠ n++ := by
+  revert n
+  apply induction
+  exact Ne.symm (succ_ne 0)
+  intro n IH
+  apply succ_ne_succ
+  exact IH
+
+/-- Compare with Mathlib's `Nat.lt_succ_self`-/
 theorem Nat.succ_gt_self (n:Nat) : n++ > n := by
-  sorry
+  rw [Nat.gt_iff_lt, Nat.lt_iff]
+  constructor
+  use 1
+  exact succ_eq_add_one n
+  exact Nat.self_ne_succ n
 
 /-- Proposition 2.2.12 (Basic properties of order for natural numbers) / Exercise 2.2.3
 
 (a) (Order is reflexive). Compare with Mathlib's `Nat.le_refl`.-/
 theorem Nat.ge_refl (a:Nat) : a ≥ a := by
-  sorry
+  use 0
+  exact Eq.symm (add_zero a)
 
 /-- (b) (Order is transitive).  The `obtain` tactic will be useful here.
     Compare with Mathlib's `Nat.le_trans`. -/
 theorem Nat.ge_trans {a b c:Nat} (hab: a ≥ b) (hbc: b ≥ c) : a ≥ c := by
-  sorry
+  obtain ⟨d, hd⟩ := hab
+  obtain ⟨e, he⟩ := hbc
+  use d + e
+  rw [hd, he]
+  rw [add_assoc]
+  rw [add_comm e]
+
+theorem Nat.eq_0_of_idempotent_add (a b : Nat) (h : a = a + b) : b = 0 := by
+  rw (occs := .pos [1]) [show a = a + 0 by exact Eq.symm (add_zero a)] at h
+  exact add_left_cancel a b 0 (id (Eq.symm h))
 
 /-- (c) (Order is anti-symmetric). Compare with Mathlib's `Nat.le_antisymm`. -/
 theorem Nat.ge_antisymm {a b:Nat} (hab: a ≥ b) (hba: b ≥ a) : a = b := by
-  sorry
+  rcases hab with ⟨d, hd⟩
+  rcases hba with ⟨e, he⟩
+  rw [hd] at he
+  rw [add_assoc] at he
+  have := add_eq_zero d e (Nat.eq_0_of_idempotent_add _ _ he)
+  rcases this with ⟨rw1, rw2⟩
+  rw [rw1] at hd
+  rw [add_zero] at hd
+  exact hd
 
 /-- (d) (Addition preserves order).  Compare with Mathlib's `Nat.add_le_add_right`. -/
 theorem Nat.add_ge_add_right (a b c:Nat) : a ≥ b ↔ a + c ≥ b + c := by
-  sorry
+  constructor
+  intro h
+  rcases h with ⟨d, hd⟩
+  use d
+  rw [hd]
+  rw [add_assoc, add_comm d, ←add_assoc]
+
+  intro h
+  rcases h with ⟨d, hd⟩
+  rw [add_comm b, add_assoc] at hd
+  rw [add_comm a] at hd
+  have hd := add_left_cancel _ _ _ hd
+  use d
 
 /-- (d) (Addition preserves order).  Compare with Mathlib's `Nat.add_le_add_left`.  -/
 theorem Nat.add_ge_add_left (a b c:Nat) : a ≥ b ↔ c + a ≥ c + b := by
@@ -243,11 +328,63 @@ theorem Nat.add_le_add_left (a b c:Nat) : a ≤ b ↔ c + a ≤ c + b := add_ge_
 
 /-- (e) a < b iff a++ ≤ b.  Compare with Mathlib's `Nat.succ_le_iff`. -/
 theorem Nat.lt_iff_succ_le (a b:Nat) : a < b ↔ a++ ≤ b := by
-  sorry
+  constructor
+  . rintro ⟨⟨ d, h1 ⟩, h2⟩
+
+    have : d ≠ 0 := by
+      intro d_eq_0
+      rw [d_eq_0, add_zero] at h1
+      exact h2 (Eq.symm h1)
+
+    obtain ⟨p, h3, h4⟩ := uniq_succ_eq d this
+    use p
+    rw [h1, succ_add, add_comm a p, ← succ_add, h3, add_comm]
+
+  . rintro ⟨d, h⟩
+    constructor
+    . use d.succ
+      simp_all [succ_add, add_succ]
+
+    . by_contra a_eq_b
+      rw [← a_eq_b] at h
+      exact self_ne_succ a (ge_antisymm (by use d) (by use 1; exact succ_eq_add_one a))
 
 /-- (f) a < b if and only if b = a + d for positive d. -/
 theorem Nat.lt_iff_add_pos (a b:Nat) : a < b ↔ ∃ d:Nat, d.IsPos ∧ b = a + d := by
-  sorry
+  constructor
+  intro h
+  rcases h with ⟨⟨d, h1⟩, h2⟩
+  use d
+  constructor
+  unfold Nat.IsPos
+  by_contra h3
+  rw [h3, add_zero] at h1
+  exact h2 (Eq.symm h1)
+  exact h1
+
+  intro h
+  rcases h with ⟨d, h1, h2⟩
+  constructor
+  use d
+  by_contra a_eq_b
+  rw [← a_eq_b] at h2
+
+  have d_eq_0 := eq_0_of_idempotent_add _ _ h2
+  exact h1 d_eq_0
+
+lemma Nat.isPos_iff_lt (n:Nat) : n.IsPos ↔ 0 < n := by
+  rw [lt_iff_add_pos]
+  constructor
+  intro h
+  use n
+  constructor
+  exact h
+  rw [zero_add]
+
+  intro h
+  obtain ⟨d, h1, h2⟩ := h
+  rw [zero_add] at h2
+  simp_all
 
 /-- If a < b then a ̸= b,-/
 theorem Nat.ne_of_lt (a b:Nat) : a < b → a ≠ b := by
@@ -264,10 +401,13 @@ theorem Nat.not_lt_of_gt (a b:Nat) : a < b ∧ a > b → False := by
   have := ne_of_lt _ _ h.1
   contradiction
 
+theorem Nat.not_lt_self {a: Nat} (h : a < a) : False := by
+  apply not_lt_of_gt a a
+  simp [h]
+
 /-- This lemma was a `why?` statement from Proposition 2.2.13,
 but is more broadly useful, so is extracted here. -/
-theorem Nat.zero_le (a:Nat) : 0 ≤ a := by
-  sorry
+theorem Nat.zero_le (a:Nat) : 0 ≤ a := by use a; simp
 
 /-- Proposition 2.2.13 (Trichotomy of order for natural numbers) / Exercise 2.2.4
     Compare with Mathlib's `trichotomous`. -/
@@ -282,9 +422,19 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
   . rw [lt_iff_succ_le] at case1
     rw [Nat.le_iff_lt_or_eq] at case1
     tauto
-  . have why : a++ > b := by sorry
+  . have why : a++ > b := by
+      rw [case2]
+      exact succ_gt_self b
     tauto
-  have why : a++ > b := by sorry
+  have why : a++ > b := by
+    rw [Nat.gt_iff_lt] at *
+    rw [lt_iff_add_pos] at *
+    rcases case3 with ⟨d, h1, h2⟩
+    use d.succ
+    constructor
+    unfold Nat.IsPos
+    exact succ_ne d
+    rw [add_succ, ← h2]
   tauto
 
 /--
@@ -299,38 +449,87 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
 def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
   | 0, b => by
     apply isTrue
-    sorry
+    exact zero_le b
   | a++, b => by
     cases decLe a b with
     | isTrue h =>
       cases decEq a b with
       | isTrue h =>
         apply isFalse
-        sorry
-      | isFalse h =>
+        intro h'
+        rw [h, ← lt_iff_succ_le] at h'
+        exact (ne_of_lt _ _ h') (by rfl)
+      | isFalse h' =>
         apply isTrue
-        sorry
+        rw [← lt_iff_succ_le]
+        rw [le_iff_lt_or_eq] at h
+        simp_all [h']
     | isFalse h =>
       apply isFalse
-      sorry
+      intro h'
+      rw [← lt_iff_succ_le] at h'
+      apply h
+      exact le_of_lt h'
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
 
+#check _root_.Nat.lt_of_le_of_lt
+
+theorem Nat.lt_of_le_of_lt {a b c : Nat} (hab: a ≤ b) (hbc: b < c) : a < c := by
+  rw [lt_iff_add_pos] at *
+  rcases hab with ⟨d, hd⟩
+  rcases hbc with ⟨e, he1, he2⟩
+  use d + e
+  constructor
+  . exact add_pos_right d he1
+  . rw [he2, hd, add_assoc]
 
 /-- (Not from textbook) Nat has the structure of a linear ordering. This allows for tactics
-such as `order` to be applicable to the Chapter 2 natural numbers. -/
+such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/
 instance Nat.linearOrder : LinearOrder Nat where
   le_refl := ge_refl
   le_trans a b c hab hbc := ge_trans hbc hab
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_le := by
+    intro a b
+    constructor
+    intro h
+    constructor
+    . exact le_of_lt h
+    . by_contra h'
+      exact not_lt_self (lt_of_le_of_lt h' h)
+
+    rintro ⟨ h1, h2 ⟩
+    rw [lt_iff, ← le_iff]
+    constructor
+    exact h1
+    by_contra h
+    rw [h] at h2
+    apply h2
+    exact ge_refl b
   le_antisymm a b hab hba := ge_antisymm hba hab
-  le_total := sorry
+  le_total := by
+    intro a b
+    obtain h | h | h := trichotomous a b
+    . left; exact le_of_lt h
+    . simp [h, ge_refl]
+    . right; exact le_of_lt h
+
   toDecidableLE := decidableRel
 
 /-- This illustration of the `order` tactic is not from the
     textbook. -/
 example (a b c d:Nat) (hab: a ≤ b) (hbc: b ≤ c) (hcd: c ≤ d)
         (hda: d ≤ a) : a = c := by order
+
+/-- An illustration of the `calc` tactic. -/
+example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hcd: c ≤ d)
+        (hde: d ≤ e) : a + 0 < e := by
+  calc
+    a + 0 = a := by simp
+        _ ≤ b := hab
+        _ < c := hbc
+        _ ≤ d := hcd
+        _ ≤ e := hde
 
 /-- (Not from textbook) Nat has the structure of an ordered monoid. This allows for tactics
 such as `gcongr` to be applicable to the Chapter 2 natural numbers. -/
@@ -339,12 +538,25 @@ instance Nat.isOrderedAddMonoid : IsOrderedAddMonoid Nat where
     intro a b hab c
     exact (add_le_add_left a b c).mp hab
 
-/-- This illustration of the `gcongr` tactic is not from the
-    textbook. -/
+
+/--
+This illustration of the `gcongr` tactic is not from the textbook.
+
+`congr` operates on equalities; it will decompose a goal of the form `f a = f b` into `a = b`, and a goal of the form `a + b = c + d` into `a = c` and `b = d`.
+
+`gcongr` generalizes `congr` to the case of any congruence, where a congruence is a relation that is "similar" to equality. Examples include `≤`, `<` and equality in modular arithmetic.
+-/
 example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
-  a+d ≤ c + e := by
+  a + d ≤ c + e := by
   gcongr
   order
+
+/-- A common trick is to rewrite an expression in a "non-canonical" form, and then use `gcongr`. -/
+example (a b c:Nat) (h2: a ≤ b) :
+  a ≤ b + c := by
+  rw [show a = a + 0 by abel]
+  gcongr
+  exact Nat.zero_le c
 
 /-- Proposition 2.2.14 (Strong principle of induction) / Exercise 2.2.5
     Compare with Mathlib's `Nat.strong_induction_on`.
@@ -352,6 +564,15 @@ example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
 theorem Nat.strong_induction {m₀:Nat} {P: Nat → Prop}
   (hind: ∀ m, m ≥ m₀ → (∀ m', m₀ ≤ m' ∧ m' < m → P m') → P m) :
     ∀ m, m ≥ m₀ → P m := by
+  have Q (n : Nat): ∀ m : Nat, m₀ ≤ m → m ≤ n → P m := by
+    apply induction
+    intro h1 h2
+    apply hind
+    exact h1
+    rintro m' ⟨h3, h4⟩
+    exfalso
+    sorry
+    sorry
   sorry
 
 /-- Exercise 2.2.6 (backwards induction)
@@ -366,6 +587,9 @@ theorem Nat.backwards_induction {n:Nat} {P: Nat → Prop}
 theorem Nat.induction_from {n:Nat} {P: Nat → Prop} (hind: ∀ m, P m → P (m++)) :
     P n → ∀ m, m ≥ n → P m := by
   sorry
+  -- intro h m
+  -- apply induction
+
 
 
 

@@ -473,8 +473,6 @@ def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
 
-#check _root_.Nat.lt_of_le_of_lt
-
 theorem Nat.lt_of_le_of_lt {a b c : Nat} (hab: a ≤ b) (hbc: b < c) : a < c := by
   rw [lt_iff_add_pos] at *
   rcases hab with ⟨d, hd⟩
@@ -551,7 +549,7 @@ example (a b c d e:Nat) (hab: a ≤ b) (hbc: b < c) (hde: d < e) :
   gcongr
   order
 
-/-- A common trick is to rewrite an expression in a "non-canonical" form, and then use `gcongr`. -/
+/-- A common trick is to rewrite an expression in a creative way, and then use `gcongr`. -/
 example (a b c:Nat) (h2: a ≤ b) :
   a ≤ b + c := by
   rw [show a = a + 0 by abel]

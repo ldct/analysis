@@ -478,7 +478,7 @@ abbrev Sequence.BoundedBy (a:Sequence) (M:ℚ) : Prop := ∀ n, |a n| ≤ M
 lemma Sequence.boundedBy_def (a:Sequence) (M:ℚ) :
   a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
 
-lemma Sequence.BoundedBy_of_coe (a : (ℕ → ℚ)) (M:ℚ) :
+lemma Sequence.BoundedBy.coe (a : (ℕ → ℚ)) (M:ℚ) :
   (a:Sequence).BoundedBy M  ↔ ∀ n, |a n| ≤ M := by
   unfold BoundedBy
   simp
@@ -523,13 +523,13 @@ lemma Sequence.IsBounded.coe (a : (ℕ → ℚ))
   constructor
   intro h
   obtain ⟨ M, h ⟩ := h
-  rw [BoundedBy_of_coe] at h
+  rw [BoundedBy.coe] at h
   use M
 
   intro h
   obtain ⟨ M, h ⟩ := h
   use M
-  rw [BoundedBy_of_coe]
+  rw [BoundedBy.coe]
   exact h
 
 /-- Example 5.1.13 -/

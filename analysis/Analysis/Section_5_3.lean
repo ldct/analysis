@@ -225,7 +225,7 @@ theorem Sequence.IsCauchy.mul {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb
     rw [isBounded_iff_of_minimum 0] at ha' hb'
     obtain ⟨ M1, h1, h2 ⟩ := ha'
     obtain ⟨ M2, h3, h4 ⟩ := hb'
-    rw [BoundedBy_of_coe] at h2 h4
+    rw [BoundedBy.coe] at h2 h4
     use max M1 M2
     constructor
     positivity
@@ -278,7 +278,7 @@ theorem Sequence.mul_equiv_left {a a':ℕ → ℚ} (b:ℕ → ℚ) (hb : (b:Sequ
   Equiv (a * b) (a' * b) := by
   have hb := isBounded_of_isCauchy hb
   rw [isBounded_iff_of_minimum 0] at hb
-  simp_rw [BoundedBy_of_coe] at hb
+  simp_rw [BoundedBy.coe] at hb
   obtain ⟨ K, hK, hB ⟩ := hb
   unfold Equiv at *
   intro ε hε
@@ -719,19 +719,28 @@ example : BoundedAwayZero (fun n ↦ 10^(n+1)) := by
   . omega
 
 /-- Examples 5.3.13 -/
-example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n+1)):Sequence).IsBounded := by
+example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n)):Sequence).IsBounded := by
   by_contra h
-  rw [Sequence.IsBounded.coe] at h
+  rw [isBounded_iff_of_minimum 0] at h
   obtain ⟨ M, hM, hB ⟩ := h
-  have : M > 0 := by sorry
-  obtain ⟨ M', h1 ⟩ := exists_nat_gt (Int.log 10 M)
+  have : M > 0 := hM
+  rw [Sequence.BoundedBy.coe] at hB
+  obtain ⟨ M', h1 ⟩ := exists_nat_gt (Int.clog 10 M)
   specialize hB M'
   rw [abs_of_nonneg (by positivity)] at hB
-  have : M ≥ (10:ℚ)^(Int.log 10 M) := by
-    apply Int.zpow_log_le_self
+  have hB : (10:ℚ)^(M':ℤ) ≤ M := by
+    norm_cast
+    norm_cast at hB
+
+  have h2 : M ≤ (10:ℕ)^(Int.clog 10 M) := by
+    apply Int.self_le_zpow_clog
     norm_num
-    positivity
-  sorry
+
+  have h3 : (10:ℕ)^(Int.clog 10 M) < (10:ℚ)^(M':ℤ) := by
+    gcongr
+    norm_num
+
+  linarith
 
 /-- Lemma 5.3.14 -/
 theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :

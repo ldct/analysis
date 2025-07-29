@@ -267,14 +267,14 @@ lemma Sequence.bounded_of_close' {ε:ℚ} {a b: ℕ → ℚ}
   rw [Sequence.isBounded_def] at *
 
   obtain ⟨ M, hM1, hM2 ⟩ := ha
-  rw [BoundedBy_of_coe] at hM2
+  rw [BoundedBy.coe] at hM2
 
   -- need to bound the finite b_0 ... b_n₀
   obtain ⟨ M3, _, hM3 ⟩  := finitePrefix b n₀
   use max |M3| (M + ε)
   constructor
   positivity
-  rw [BoundedBy_of_coe]
+  rw [BoundedBy.coe]
   intro n
   have : n < n₀ ∨ n ≥ n₀ := by omega
   obtain h | h := this

@@ -255,7 +255,7 @@ lemma Nat.pow_2_eq_sq (a : Nat) : a ^ (2 : Nat) = a * a := by
   have : 2 = 1++ := by decide
   rw [this, pow_succ, pow_one]
 
-lemma Nat.add_cancel_left' (a b c: Nat) : a + b = a + c ↔  b = c := by
+lemma Nat.add_cancel_left' (a b c: Nat) : a + b = a + c ↔ b = c := by
   constructor
   intro h
   exact add_left_cancel a b c h

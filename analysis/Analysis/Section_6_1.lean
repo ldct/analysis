@@ -397,6 +397,7 @@ example : (0.01:ℝ).EventuallyClose seq_6_1_6 1 := by
   simp
   unfold seq_6_1_6
   sorry
+  sorry
 
 /-- Examples 6.1.6 -/
 example : seq_6_1_6.TendsTo 1 := by sorry

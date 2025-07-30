@@ -130,8 +130,7 @@ Compare: if you need to work with `Rat.Steady` on the coercion directly, there w
 conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  intro n hn m hm
-  simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int, Rat.Close]
+  intro n hn m hm; simp_all [Rat.Close]
 
 /--
 Example 5.1.5: The sequence `1, 0, 1, 0, ...` is 1-steady.
@@ -546,7 +545,6 @@ example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
   obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
 
 
-/-- Example 5.1.13 -/
 lemma isBounded_iff_of_minimum (m₀ : ℚ) (s : Sequence) :
   s.IsBounded ↔ ∃ M > m₀, s.BoundedBy  M := by
   constructor

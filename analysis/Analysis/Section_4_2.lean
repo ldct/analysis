@@ -178,7 +178,6 @@ lemma formalDiv_zero (a:ℤ) : a // 0 = 0 := by rfl
 -/
 instance Rat.instInv : Inv Rat where
   inv := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ b // a) (by
-    clear a b
     intro a b h
     obtain h1 | h2 := Classical.em (a ≈ PreRatZero)
     · have h3 : (b ≈ PreRatZero) := Setoid.trans (Setoid.symm h) h1
@@ -217,7 +216,6 @@ AddGroup.ofLeftAxioms (by
   ring
 )
  (by
-  clear a b
   intro x
   obtain ⟨ a, b, hb , rfl ⟩ := eq_diff x
   rw [show (0:Rat) = 0 // 1 by rfl]
@@ -225,7 +223,6 @@ AddGroup.ofLeftAxioms (by
   rw [eq _ _ (by simp [hb]) hb]
   simp
  ) (by
-  clear a b
   intro a
   obtain ⟨ a, b, hb , rfl ⟩ := eq_diff a
   rw [neg_eq _ hb]
@@ -240,7 +237,6 @@ AddGroup.ofLeftAxioms (by
 /-- Proposition 4.2.4 (laws of algebra) / Exercise 4.2.3 -/
 instance Rat.instAddCommGroup : AddCommGroup Rat where
   add_comm := by
-    clear a b
     intro a b
     obtain ⟨ p, q, hb , rfl ⟩ := eq_diff a
     obtain ⟨ r, s, hd , rfl ⟩ := eq_diff b

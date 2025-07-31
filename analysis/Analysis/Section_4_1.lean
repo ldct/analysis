@@ -613,6 +613,37 @@ instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := b
         sorry
   exact Quotient.recOnSubsingleton₂ n m this
 
+theorem Int.lt_of_le_of_lt {a b c : Int} (hab: a ≤ b) (hbc: b < c) : a < c := by
+  rw [lt_iff_exists_positive_difference] at *
+  rcases hab with ⟨d, hd⟩
+  rcases hbc with ⟨e, he1, he2⟩
+  use d + e
+  constructor
+  . omega
+  . push_cast
+    rw [he2, hd, add_assoc]
+
+theorem Int.ne_of_lt (a b:Int) : a < b → a ≠ b := by
+  intro h; exact h.2
+
+lemma Int.le_of_lt {n m:Int} (hnm: n < m) : n ≤ m := sorry
+
+/-- If a > b and a < b then contradiction -/
+theorem Int.not_lt_of_gt (a b:Int) : a < b ∧ a > b → False := by
+  intro h
+  have h1 := h.1
+  have h2 := h.2
+  have h2 : b < a := by exact h2
+  have h1' := Int.le_of_lt h1
+  have h2' := Int.le_of_lt h2
+  have h3 := (le_antisymm h1' h2').symm
+  have h4 := Int.ne_of_lt _ _ h.1
+  exact h4 (Eq.symm h3)
+
+theorem Int.not_lt_self {a: Int} (h : a < a) : False := by
+  apply not_lt_of_gt a a
+  simp [h]
+
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
 instance Int.instLinearOrder : LinearOrder Int where
   le_refl := by
@@ -626,7 +657,26 @@ instance Int.instLinearOrder : LinearOrder Int where
     use n + m
     simp
     ring
-  lt_iff_le_not_le := sorry
+  lt_iff_le_not_le := by
+    intro a b
+    constructor
+    intro h
+    constructor
+    . exact h.1
+    by_contra h2
+    exact not_lt_self (lt_of_le_of_lt h2 h)
+
+
+    rintro ⟨ h1, h2 ⟩
+    rw [lt_iff, ← le_iff]
+    constructor
+    exact h1
+    by_contra h
+    rw [h] at h2
+    apply h2
+    use 0
+    simp
+
   le_antisymm := fun _ _ h1 h2 ↦ le_antisymm h1 h2
   le_total := sorry
   toDecidableLE := decidableRel

@@ -152,6 +152,9 @@ theorem Real.LIM_eq_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Se
   intro h; apply Quotient.sound
   rwa [dif_pos ha, dif_pos hb, CauchySequence.equiv_iff]
 
+theorem Real.LIM_ne_LIM {a b:ℕ → ℚ} (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
+  LIM a ≠ LIM b ↔ ¬ (Sequence.Equiv a b) := not_congr (Real.LIM_eq_LIM ha hb)
+
 /--Lemma 5.3.6 (Sum of Cauchy sequences is Cauchy)-/
 theorem Sequence.IsCauchy.add {a b:ℕ → ℚ}  (ha: (a:Sequence).IsCauchy) (hb: (b:Sequence).IsCauchy) :
     (a + b:Sequence).IsCauchy := by
@@ -615,11 +618,13 @@ theorem Real.left_distrib (a b c:Real) : a * (b + c) = a * b + a * c := by
   rw [LIM_add (by assumption) (by assumption)]
   ring_nf
 
+theorem Real.LIM_eq_0 : (LIM fun _ ↦ 0) = 0 := by
+  rw [show (0:Real) = (0:ℚ) by norm_cast, ratCast_def]
+
 theorem Real.zero_mul (a:Real) : (0:Real) * a = 0 := by
   obtain ⟨ x, hx, hx' ⟩ := eq_lim a
   rw [hx']
-  rw [show (0:Real) = (0:ℚ) by norm_cast]
-  rw [ratCast_def]
+  rw [← LIM_eq_0]
   rw [LIM_mul (Sequence.IsCauchy.const 0) hx]
   congr
   ext i
@@ -754,9 +759,28 @@ theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
   have hb' := (Sequence.IsCauchy.coe _).mp hb (ε/2) (half_pos hε)
   obtain ⟨ N, hb' ⟩ := hb'
   obtain ⟨ n₀, hn₀, hx ⟩ := hx N
-  have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
+  have how : ∀ j ≥ N, |b j| ≥ ε/2 := by
+    intro j hj
+    specialize hb' j hj n₀ hn₀
+    rw [Section_4_3.dist_eq] at hb'
+    rw [lt_abs] at hx
+    rw [abs_le] at hb'
+    rw [ge_iff_le, le_abs]
+    obtain hx | hx := hx
+    constructor
+    linarith
+    right
+    linarith
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
-  have not_hard : Sequence.Equiv a b := by sorry
+  have not_hard : Sequence.Equiv a b := by
+    intro ε hε
+    rw [Rat.eventually_close_of_coe_coe]
+    use n₀
+    intro n hn
+    unfold a
+    have : ¬(n < n₀) := by omega
+    simp [this]
+    positivity
   have ha : (a:Sequence).IsCauchy := (Sequence.IsCauchy.equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, ?_ ⟩
   . rw [bounded_away_zero_def]
@@ -775,7 +799,7 @@ theorem Real.lim_of_boundedAwayZero {a:ℕ → ℚ} (ha: BoundedAwayZero a)
     LIM a ≠ 0 := by
   by_contra h
   obtain ⟨ c, h1, h2 ⟩ := ha
-  rw [show (0:Real) = (0:ℚ) by norm_cast, ratCast_def] at h
+  rw [← LIM_eq_0] at h
   rw [LIM_eq_LIM ha_cauchy (by apply Sequence.IsCauchy.const)] at h
   specialize h (c/2) (by positivity)
   rw [Rat.eventually_close_of_coe_coe] at h
@@ -881,7 +905,8 @@ lemma BoundedAwayZero.const {q : ℚ} (hq : q ≠ 0) : BoundedAwayZero fun _ ↦
 
 theorem Real.inv_ratCast (q:ℚ) : (q:Real)⁻¹ = (q⁻¹:ℚ) := by
   obtain h | h := Decidable.em (q = 0)
-  . rw [h, ← show (0:Real) = (0:ℚ) by norm_cast]
+  . rw [h]
+    rw [← show (0:Real) = (0:ℚ) by norm_cast]
     norm_num; norm_cast
   . rw [ratCast_def, ratCast_def, inv_def (BoundedAwayZero.const h) (by apply Sequence.IsCauchy.const)]
     congr
@@ -937,7 +962,9 @@ theorem Real.mul_right_nocancel : ¬ ∀ (x y z:Real), (hz: z = 0) → (x * z = 
 
 /-- Exercise 5.3.4 -/
 theorem Real.equiv_of_bounded {a b:ℕ → ℚ} (ha: (a:Sequence).IsBounded) (hab: Sequence.Equiv a b) :
-    (b:Sequence).IsBounded := by sorry
+    (b:Sequence).IsBounded := by
+      unfold Sequence.Equiv at hab
+      rwa [Sequence.bounded_of_close (hab 1 (by norm_num))] at ha
 
 /--
   Same as `Sequence.IsCauchy.harmonic` but reindexing the sequence as a₀ = 1, a₁ = 1/2, ...
@@ -954,9 +981,7 @@ theorem Sequence.IsCauchy.harmonic' : ((fun n ↦ 1/((n:ℚ)+1): ℕ → ℚ):Se
 
 /-- Exercise 5.3.5 -/
 theorem Real.LIM.harmonic : LIM (fun n ↦ 1/((n:ℚ)+1)) = 0 := by
-  rw [show (0:Real) = (0:ℚ) by norm_cast]
-  rw [Real.ratCast_def]
-  rw [LIM_eq_LIM (Sequence.IsCauchy.harmonic') (Sequence.IsCauchy.const 0)]
+  rw [← LIM_eq_0, LIM_eq_LIM (Sequence.IsCauchy.harmonic') (Sequence.IsCauchy.const 0)]
   unfold Sequence.Equiv
   intro ε hε
   rw [Rat.eventually_close_of_coe_coe]

@@ -86,7 +86,7 @@ theorem Real.isNeg_def (x:Real) :
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 @[simp]
-theorem Real.neg_iff_pos_of_neg (x:Real) : x.IsNeg ↔ (-x).IsPos := by
+theorem Real.isNeg_iff_isPos_of_neg (x:Real) : x.IsNeg ↔ (-x).IsPos := by
   rw [isNeg_def, isPos_def]
   constructor
   . rintro ⟨ a, ha, hcauchy, heq ⟩
@@ -117,8 +117,8 @@ theorem Real.neg_iff_pos_of_neg (x:Real) : x.IsNeg ↔ (-x).IsPos := by
     exact Sequence.IsCauchy.neg _ hcauchy
     rw [← Real.neg_LIM _ hcauchy, ← heq, neg_neg]
 
-theorem Real.pos_iff_neg_of_neg (x:Real) : x.IsPos ↔ (-x).IsNeg := by
-  rw [neg_iff_pos_of_neg]
+theorem Real.isPos_iff_isNeg_of_neg (x:Real) : x.IsPos ↔ (-x).IsNeg := by
+  rw [isNeg_iff_isPos_of_neg]
   ring_nf
 
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
@@ -129,7 +129,7 @@ theorem Real.not_zero_pos (x:Real) : ¬ (x = 0 ∧ x.IsPos) := by
   by_contra h
   obtain ⟨ h1, h2 ⟩ := h
   obtain ⟨ a, ⟨ c, hc, hbound ⟩ , ha2, heq ⟩ := h2
-  rw [h1, show (0:Real) = (0:ℚ) by rfl, ratCast_def, LIM_eq_LIM (Sequence.IsCauchy.const _) ha2] at heq
+  rw [h1, ← LIM_eq_0, LIM_eq_LIM (Sequence.IsCauchy.const _) ha2] at heq
   specialize heq (c/2) (by positivity)
   rw [Rat.eventually_close_of_coe_coe] at heq
   obtain ⟨ N, heq ⟩ := heq
@@ -142,11 +142,15 @@ theorem Real.nonzero_of_pos {x:Real} (hx: x.IsPos) : x ≠ 0 := by
   have := not_zero_pos x
   simpa [hx] using this
 
+theorem Real.nonpos_of_zero {x:Real} (hx : x = 0) : ¬ (x.IsPos) := by
+  have := not_zero_pos x
+  simpa [hx] using this
+
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
 theorem Real.not_zero_neg (x:Real) : ¬ (x = 0 ∧ x.IsNeg) := by
   by_contra h
   obtain ⟨ h1, h2 ⟩ := h
-  rw [neg_iff_pos_of_neg] at h2
+  rw [isNeg_iff_isPos_of_neg] at h2
   have : -x = 0 := by simp [h1]
   exact not_zero_pos (-x) ⟨this, h2⟩
 
@@ -154,8 +158,30 @@ theorem Real.nonzero_of_neg {x:Real} (hx: x.IsNeg) : x ≠ 0 := by
   have := not_zero_neg x
   simpa [hx] using this
 
+theorem Real.nonneg_of_zero {x:Real} (hx : x = 0) : ¬ (x.IsNeg) := by
+  have := not_zero_neg x
+  simpa [hx] using this
+
 /-- Proposition 5.4.4 (basic properties of positive reals) / Exercise 5.4.1 -/
-theorem Real.not_pos_neg (x:Real) : ¬ (x.IsPos ∧ x.IsNeg) := by sorry
+theorem Real.not_pos_neg (x:Real) : ¬ (x.IsPos ∧ x.IsNeg) := by
+  obtain h | h := eq_or_ne x 0
+  . have h1 := nonneg_of_zero h
+    have h2 := nonpos_of_zero h
+    simp [h1, h2]
+
+  rw [← LIM_eq_0] at h
+
+  obtain ⟨a, h1, h2⟩ := Real.eq_lim x
+  rw [h2] at h
+  rw [LIM_ne_LIM h1 (by apply Sequence.IsCauchy.const)] at h
+
+  unfold Sequence.Equiv at h
+  rw [not_forall] at h
+  obtain ⟨ ε, h1 ⟩  := h
+  simp only [Classical.not_imp, not_forall] at h1
+  obtain ⟨ h1, h2 ⟩ := h1
+  sorry
+
 
 theorem BoundedAwayPos.add {a b:ℕ → ℚ} (ha: BoundedAwayPos a) (hb: BoundedAwayPos b) :
     BoundedAwayPos (a + b) := by
@@ -204,17 +230,57 @@ theorem Real.IsPos.mul {x y:Real} (hx: x.IsPos) (hy: y.IsPos) : (x*y).IsPos := b
 
 theorem Real.IsPos.coe (q:ℚ) : (q:Real).IsPos ↔ q > 0 := by
   constructor
+  · intro hpos
+    rw [ratCast_def] at hpos
+    obtain ⟨ a, ha, hcauchy, heq ⟩ := hpos
+    rw [LIM_eq_LIM (by apply Sequence.IsCauchy.const) hcauchy] at heq
+    obtain ⟨ c, h1, h2 ⟩ := ha
+    specialize heq (c/2) (by positivity)
+    rw [Rat.eventually_close_of_coe_coe] at heq
+    obtain ⟨ N, heq ⟩ := heq
+    specialize heq N (by omega)
+    specialize h2 N
+    rw [abs_le] at heq
+    linarith
+
   intro hpos
-  rw [ratCast_def] at hpos
-  unfold IsPos at hpos
-  obtain ⟨ a, ha, hcauchy, heq ⟩ := hpos
-  rw [LIM_eq_LIM (by apply Sequence.IsCauchy.const) hcauchy] at heq
-  unfold Sequence.Equiv at heq
-  sorry
-  sorry
+  use fun _ ↦ q
+  and_intros
 
+  · use q, hpos
+    intro n; rfl
 
-theorem Real.IsNeg.coe (q:ℚ) : (q:Real).IsNeg ↔ q < 0 := by sorry
+  · exact Sequence.IsCauchy.const q
+
+  · rw [ratCast_def]
+
+theorem Real.IsNeg.coe (q:ℚ) : (q:Real).IsNeg ↔ q < 0 := by
+  constructor
+  · intro hpos
+    rw [ratCast_def] at hpos
+    obtain ⟨ a, ha, hcauchy, heq ⟩ := hpos
+    rw [LIM_eq_LIM (by apply Sequence.IsCauchy.const) hcauchy] at heq
+    obtain ⟨ c, h1, h2 ⟩ := ha
+    specialize heq (c/2) (by positivity)
+    rw [Rat.eventually_close_of_coe_coe] at heq
+    obtain ⟨ N, heq ⟩ := heq
+    specialize heq N (by omega)
+    specialize h2 N
+    rw [abs_le] at heq
+    linarith
+
+  intro hpos
+  use fun _ ↦ q
+  and_intros
+
+  · use (-q), (by linarith)
+    intro n
+    simp
+
+  · exact Sequence.IsCauchy.const q
+
+  · rw [ratCast_def]
+
 
 open Classical in
 /-- Need to use classical logic here because isPos and isNeg are not decidable -/
@@ -252,24 +318,25 @@ theorem Real.lt_iff (x y:Real) : x < y ↔ (x-y).IsNeg := by rfl
 theorem Real.le_iff (x y:Real) : x ≤ y ↔ (x < y) ∨ (x = y) := by rfl
 
 theorem Real.lt_iff_isPos (x y:Real) : x < y ↔ (y-x).IsPos := by
-  rw [lt_iff, pos_iff_neg_of_neg]
+  rw [lt_iff, isPos_iff_isNeg_of_neg]
   ring_nf
 
 theorem Real.gt_iff (x y:Real) : x > y ↔ (x-y).IsPos := by
-  rw [gt_iff_lt, lt_iff, neg_iff_pos_of_neg]
+  rw [gt_iff_lt, lt_iff, isNeg_iff_isPos_of_neg]
   ring_nf
 
 theorem Real.ge_iff (x y:Real) : x ≥ y ↔ (x > y) ∨ (x = y) := by
   rw [ge_iff_le, le_iff, eq_comm]
 
-theorem Real.lt_of_coe (q q':ℚ): q < q' ↔ (q:Real) < (q':Real) := by sorry
+theorem Real.lt_of_coe (q q':ℚ): q < q' ↔ (q:Real) < (q':Real) := by
+  simp [lt_iff_isPos, ratCast_sub, IsPos.coe]
 
 theorem Real.gt_of_coe (q q':ℚ): q > q' ↔ (q:Real) > (q':Real) := Real.lt_of_coe _ _
 
 theorem Real.isPos_iff (x:Real) : x.IsPos ↔ 0 < x := by
   rw [lt_iff]
   ring_nf
-  exact pos_iff_neg_of_neg x
+  exact isPos_iff_isNeg_of_neg x
 
 theorem Real.isNeg_iff (x:Real) : x.IsNeg ↔ x < 0 := by
   rw [lt_iff]
@@ -360,7 +427,7 @@ theorem Real.inv_of_pos {x:Real} (hx: x.IsPos) : x⁻¹.IsPos := by
     intro h
     have := mul_pos_neg hx h
     have id : -(1:Real) = (-1:ℚ) := by simp
-    simp only [hident, neg_iff_pos_of_neg, id, IsPos.coe, self_mul_inv hnon] at this
+    simp only [hident, isNeg_iff_isPos_of_neg, id, IsPos.coe, self_mul_inv hnon] at this
     linarith
   have trich := Real.trichotomous x⁻¹
   simpa [hinv_non, hnonneg] using trich

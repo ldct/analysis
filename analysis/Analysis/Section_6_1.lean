@@ -121,13 +121,13 @@ lemma Real.Steady.coe_from_coe (ε : ℝ) (n₁ : ℕ) (a:ℕ → ℝ) :
   constructor
   · intro h n hn m hm
     specialize h n (by simp ; omega) m (by simp ; omega)
-    simp_all [hn, hm, h]
+    simp_all
 
   intro h n hn m hm
   simp at hn hm
   lift n to ℕ using (by omega)
   lift m to ℕ using (by omega)
-  simp_all [hn, hm]
+  simp_all
 
 lemma Real.EventuallySteady.coe (ε: ℝ) (a: ℕ → ℝ) :
   ε.EventuallySteady a ↔ ∃ N:ℕ, ε.Steady ((a:Sequence).from N) := by

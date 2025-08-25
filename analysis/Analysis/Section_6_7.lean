@@ -24,10 +24,12 @@ exponentiation which in the epilogue to this chapter we will show is identical t
 
 namespace Chapter6
 
+#check Real.CloseSeq
+
 open Sequence Real
 
 /-- Lemma 6.7.1 (Continuity of exponentiation) -/
-lemma ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
+lemma Real.ratPow_continuous {x α:ℝ} (hx: x > 0) {q: ℕ → ℚ}
  (hq: ((fun n ↦ (q n:ℝ)):Sequence).TendsTo α) :
  ((fun n ↦ x^(q n:ℝ)):Sequence).Convergent := by
   -- This proof is rearranged slightly from the original text.

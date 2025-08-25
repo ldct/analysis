@@ -69,11 +69,7 @@ example : (⊥:EReal) < ⊤ := by simp
 example : ¬ (3:EReal) ≤ ⊥ := by
   by_contra h
   simp at h
-<<<<<<< HEAD
   exact real_neq_neg_infty 3 h
-=======
-  norm_cast at h
->>>>>>> 8f00b92 (Fill in examples)
 
 #check instCompleteLinearOrderEReal
 

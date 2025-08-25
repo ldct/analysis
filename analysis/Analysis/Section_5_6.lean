@@ -114,13 +114,8 @@ theorem Real.rootset_nonempty {x:Real} (hx: x ≥ 0) (n:ℕ) (hn: n ≥ 1) : (ro
 theorem Real.rootset_bddAbove {x:Real} (n:ℕ) (hn: n ≥ 1) : BddAbove (rootSet x n) := by
   -- This proof is written to follow the structure of the original text.
   rw [_root_.bddAbove_def]
-<<<<<<< HEAD
-  obtain h | h := le_or_gt x 1
-  . use 1; intro y hy; simp at hy
-=======
   rcases le_or_gt x 1 with h | h
   . use 1; intro y hy; simp [rootSet] at hy
->>>>>>> 8f00b92 (Fill in examples)
     by_contra! hy'
     replace hy' : 1 < y^n := by
       have := pow_gt_pow y 1 n (by linarith) (by norm_num) (by omega)
@@ -222,15 +217,6 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   lift a' to ℕ using by order
   norm_cast at *
   set y := x.root (a*b')
-<<<<<<< HEAD
-  have h1 : y = (x.root b').root a := by rw [root_root, mul_comm] <;> linarith
-  have h2 : y = (x.root b).root a' := by rw [root_root, mul_comm, ←hq] <;> linarith
-  have h3 : y^a = x.root b' := by rw [h1]; apply pow_of_root (root_nonneg _ _) <;> linarith
-  have h4 : y^a' = x.root b := by rw [h2]; apply pow_of_root (root_nonneg _ _) <;> linarith
-<<<<<<< HEAD
-=======
-
-=======
   have h1 : y = (x.root b').root a := by
     rw [root_root (by linarith) (by linarith) (by linarith), Nat.mul_comm]
   have h2 : y = (x.root b).root a' := by
@@ -239,8 +225,6 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
     rw [h1]; apply pow_of_root (root_nonneg (by linarith) (by linarith)) (by linarith)
   have h4 : y^a' = x.root b := by
     rw [h2]; apply pow_of_root (root_nonneg (by linarith) (by linarith)) (by linarith)
->>>>>>> 8f00b92 (Fill in examples)
->>>>>>> b2818eb (Fill in examples)
   calc
     _ = (y^a)^a' := by rw [h3]
     _ = y^(a*a') := pow_mul _ _ _

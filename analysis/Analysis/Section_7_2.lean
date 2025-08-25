@@ -34,18 +34,8 @@ structure Series where
 @[coe]
 def Series.ofNatFun (a : ℕ → ℝ) : Series where
     m := 0
-<<<<<<< HEAD
-    seq n := if n ≥ 0 then a n.toNat else 0
-    vanish := by grind
-  }
-
-@[simp]
-theorem Series.eval_coe (a: ℕ → ℝ) (n: ℕ) : (a: Series).seq n = a n := by simp
-=======
     seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
-    vanish := by
-      intro n hn
-      simp [hn]
+    vanish := by grind
 
 /-- Functions from ℕ to ℝ can be thought of as series. -/
 instance Series.instCoe : Coe (ℕ → ℝ) Series where
@@ -56,7 +46,6 @@ theorem Series.eval_coe (a : ℕ → ℝ) (n : ℕ) : (a : Series).seq n = a n :
 
 @[simp]
 theorem Series.eval_coe_at_int (a : ℕ → ℝ) (n : ℤ) : (a : Series).seq n = if n ≥ 0 then a n.toNat else 0 := by norm_cast
->>>>>>> 8f00b92 (Fill in examples)
 
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m

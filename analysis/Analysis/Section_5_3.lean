@@ -727,7 +727,9 @@ example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n)):Sequence).IsBounded := by
     norm_num
 
   have h3 : (10:ℕ)^(Int.clog 10 M) < (10:ℚ)^(M':ℤ) := by
-    sorry
+    rw [← show (10:ℚ) = (10:ℕ) by norm_cast]
+    gcongr
+    norm_num
 
   linarith
 

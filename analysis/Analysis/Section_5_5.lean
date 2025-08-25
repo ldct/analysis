@@ -108,11 +108,7 @@ lemma Real.LUB_claim1 (n : ℕ) {E: Set Real} (hE: Set.Nonempty E) (hbound: BddA
   observe hx₀ : x₀ ∈ E
 
   set ε := ((1/(n+1):ℚ):Real)
-<<<<<<< HEAD
   have hpos : ε.IsPos := by simp [isPos_iff, ε]; positivity
-=======
-  have hpos : ε.IsPos := by simp [isPos_iff, ε, ←lt_of_coe]; positivity
->>>>>>> 8f00b92 (Fill in examples)
   apply existsUnique_of_exists_of_unique
   . rw [bddAbove_def] at hbound; obtain ⟨ M, hbound ⟩ := hbound
     choose K _ hK using le_mul hpos M
@@ -171,13 +167,7 @@ theorem Real.LUB_exist {E: Set Real} (hE: Set.Nonempty E) (hbound: BddAbove E): 
   set S := LIM a; use S
   have claim4 : S = LIM (a - b) := by
     have : LIM b = 0 := LIM.harmonic
-<<<<<<< HEAD
     simp [←LIM_sub claim3 hb, S, this]
-=======
-    rw [← LIM_sub claim3 hb]
-    simp [S, this]
-  use S
->>>>>>> 8f00b92 (Fill in examples)
   rw [isLUB_def, upperBound_def]
   split_ands
   . intros; apply LIM_of_ge claim3; grind [upperBound_def]

@@ -31,16 +31,24 @@ structure Series where
   seq : ℤ → ℝ
   vanish : ∀ n < m, seq n = 0
 
+@[coe]
+def Series.ofNatFun (a : ℕ → ℝ) : Series where
+    m := 0
+    seq := fun n ↦ if n ≥ 0 then a n.toNat else 0
+    vanish := by grind
+
 /-- Functions from ℕ to ℝ can be thought of as series. -/
 instance Series.instCoe : Coe (ℕ → ℝ) Series where
-  coe := fun a ↦ {
-    m := 0
-    seq n := if n ≥ 0 then a n.toNat else 0
-    vanish := by grind
-  }
+  coe := Series.ofNatFun
 
 @[simp]
-theorem Series.eval_coe (a: ℕ → ℝ) (n: ℕ) : (a: Series).seq n = a n := by simp
+theorem Series.eval_coe (a : ℕ → ℝ) (n : ℕ) : (a : Series).seq n = a n := by norm_cast
+
+@[simp]
+theorem Series.eval_coe_at_int (a : ℕ → ℝ) (n : ℤ) : (a : Series).seq n = if n ≥ 0 then a n.toNat else 0 := by norm_cast
+
+@[simp]
+theorem Series.m_coe (a : ℕ → ℝ) : (a : Series).m = 0 := by rfl
 
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m
@@ -203,7 +211,7 @@ instance Series.inst_add : Add Series where
 
 theorem Series.add_coe (a b: ℕ → ℝ) : (a:Series) + (b:Series) = (fun n ↦ a n + b n) := by
   ext n; rfl
-  by_cases h:n ≥ 0 <;> simp [h, HAdd.hAdd, Add.add]
+  by_cases h:n ≥ 0 <;> simp [Series.ofNatFun, h, HAdd.hAdd, Add.add]
 
 /-- Proposition 7.2.14 (a) (Series laws) / Exercise 7.2.5.  The `convergesTo` form can be more convenient for applications. -/
 theorem Series.convergesTo.add {s t:Series} {L M: ℝ} (hs: s.convergesTo L) (ht: t.convergesTo M) :
@@ -222,7 +230,7 @@ instance Series.inst.smul : SMul ℝ Series where
 
 theorem Series.smul_coe (a: ℕ → ℝ) (c: ℝ) : (c • a:Series) = (fun n ↦ c * a n) := by
   ext n; rfl
-  by_cases h:n ≥ 0 <;> simp [h, HSMul.hSMul, SMul.smul]
+  by_cases h:n ≥ 0 <;> simp [Series.ofNatFun, h, HSMul.hSMul, SMul.smul]
 
 /-- Proposition 7.2.14 (b) (Series laws) / Exercise 7.2.5.  The `convergesTo` form can be more convenient for applications. -/
 theorem Series.convergesTo.smul {s:Series} {L c: ℝ} (hs: s.convergesTo L) :
@@ -242,7 +250,7 @@ instance Series.inst_sub : Sub Series where
 
 theorem Series.sub_coe (a b: ℕ → ℝ) : (a:Series) - (b:Series) = (fun n ↦ a n - b n) := by
   ext n; rfl
-  by_cases h:n ≥ 0 <;> simp [h, HSub.hSub, Sub.sub]
+  by_cases h:n ≥ 0 <;> simp [Series.ofNatFun, h, HSub.hSub, Sub.sub]
 
 theorem Series.convergesTo.sub {s t:Series} {L M: ℝ} (hs: s.convergesTo L) (ht: t.convergesTo M) :
     (s - t).convergesTo (L - M) := by

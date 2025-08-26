@@ -99,30 +99,51 @@ theorem Real.zpow_inj {x y:Real} {n:ℤ} (hx: x > 0) (hy : y > 0) (hn: n ≠ 0) 
 /-- Analogue of Proposition 4.3.12(d) -/
 theorem Real.zpow_abs (x:Real) (n:ℤ) (hx: x ≠ 0) : |x|^n = |x^n| := by sorry
 
-/-- Definition 5.6.2.  We permit ``junk values'' when `x` is negative or `n` vanishes. -/
-noncomputable abbrev Real.root (x:Real) (n:ℕ) : Real := sSup { y:Real | y ≥ 0 ∧ y^n ≤ x }
+def Real.rootSet (x:Real) (n:ℕ) : Set Real := { y:Real | y ≥ 0 ∧ y^n ≤ x }
 
-noncomputable abbrev Real.sqrt (x:Real) := x.root 2
+/-- Definition 5.6.2.  We permit ``junk values'' when `x` is negative or `n` vanishes. -/
+noncomputable def Real.root (x:Real) (n:ℕ) : Real := sSup (rootSet x n)
+
+noncomputable def Real.sqrt (x:Real) := x.root 2
 
 /-- Lemma 5.6.5 (Existence of n^th roots) -/
-theorem Real.rootset_nonempty {x:Real} (hx: x ≥ 0) (n:ℕ) (hn: n ≥ 1) : { y:Real | y ≥ 0 ∧ y^n ≤ x }.Nonempty := by
+theorem Real.rootset_nonempty {x:Real} (hx: x ≥ 0) (n:ℕ) (hn: n ≥ 1) : (rootSet x n).Nonempty := by
   use 0
-  sorry
+  field_simp [rootSet, hx]
 
-theorem Real.rootset_bddAbove {x:Real} (hx: x ≥ 0) (n:ℕ) (hn: n ≥ 1) : BddAbove { y:Real | y ≥ 0 ∧ y^n ≤ x } := by
+theorem Real.rootset_bddAbove {x:Real} (n:ℕ) (hn: n ≥ 1) : BddAbove (rootSet x n) := by
   -- This proof is written to follow the structure of the original text.
   rw [_root_.bddAbove_def]
-  obtain h | h := le_or_gt x 1
-  . use 1; intro y hy; simp at hy
+  rcases le_or_gt x 1 with h | h
+  . use 1; intro y hy; simp [rootSet] at hy
     by_contra! hy'
     replace hy' : 1 < y^n := by
-      sorry
+      have := pow_gt_pow y 1 n (by linarith) (by norm_num) (by omega)
+      simpa
     linarith
-  use x; intro y hy; simp at hy
+  use x; intro y hy; simp [rootSet] at hy
   by_contra! hy'
   replace hy' : x < y^n := by
-    sorry
+    have : y^1 ≤ y^n := by
+      gcongr
+      linarith
+    linarith
   linarith
+
+def Real.sqrt2set := rootSet 2 2
+
+example : ((1.4):Real) ≤ (2:Real).sqrt := by
+  unfold Real.sqrt
+  unfold Real.root
+  have : ((1.4):Real) ∈ {y | y ≥ 0 ∧ y ^ 2 ≤ 2} := by
+    simp
+    constructor
+    norm_num
+    norm_num
+  unfold sSup
+  unfold Real.inst_SupSet
+  dsimp
+  sorry
 
 /-- Lemma 5.6.6 (ab) / Exercise 5.6.1 -/
 theorem Real.eq_root_iff_pow_eq {x y:Real} (hx: x ≥ 0) (hy: y ≥ 0) {n:ℕ} (hn: n ≥ 1) :
@@ -196,14 +217,18 @@ theorem Real.pow_root_eq_pow_root {a a':ℤ} {b b':ℕ} (hb: b > 0) (hb' : b' > 
   lift a' to ℕ using by order
   norm_cast at *
   set y := x.root (a*b')
-  have h1 : y = (x.root b').root a := by rw [root_root, mul_comm] <;> linarith
-  have h2 : y = (x.root b).root a' := by rw [root_root, mul_comm, ←hq] <;> linarith
-  have h3 : y^a = x.root b' := by rw [h1]; apply pow_of_root (root_nonneg _ _) <;> linarith
-  have h4 : y^a' = x.root b := by rw [h2]; apply pow_of_root (root_nonneg _ _) <;> linarith
+  have h1 : y = (x.root b').root a := by
+    rw [root_root (by linarith) (by linarith) (by linarith), Nat.mul_comm]
+  have h2 : y = (x.root b).root a' := by
+    rw [root_root (by linarith) (by linarith) (by linarith), Nat.mul_comm, ←hq]
+  have h3 : y^a = x.root b' := by
+    rw [h1]; apply pow_of_root (root_nonneg (by linarith) (by linarith)) (by linarith)
+  have h4 : y^a' = x.root b := by
+    rw [h2]; apply pow_of_root (root_nonneg (by linarith) (by linarith)) (by linarith)
   calc
     _ = (y^a)^a' := by rw [h3]
     _ = y^(a*a') := pow_mul _ _ _
-    _ = y^(a'*a) := by rw [mul_comm]
+    _ = y^(a'*a) := by rw [Nat.mul_comm]
     _ = (y^a')^a := (pow_mul _ _ _).symm
     _ = _ := by rw [h4]
 

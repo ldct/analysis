@@ -135,7 +135,7 @@ Compare: if you need to work with `Rat.Steady` on the coercion directly, there w
 conditions `hn : n ≥ 0` and `hm : m ≥ 0` that you will need to deal with.
 -/
 example : (1:ℚ).Steady ((fun _:ℕ ↦ (3:ℚ)):Sequence) := by
-  intro n hn m hm; simp_all [Sequence.n0_coe, Sequence.eval_coe_at_int, Rat.Close]
+  intro n hn m hm; simp_all [Rat.Close]
 
 /--
 Example 5.1.5: The sequence `1, 0, 1, 0, ...` is 1-steady.
@@ -172,13 +172,45 @@ example : (0.1:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) :
 /--
 Example 5.1.5: The sequence 0.1, 0.01, 0.001, ... is not 0.01-steady. Left as an exercise.
 -/
-example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by sorry
+example : ¬(0.01:ℚ).Steady ((fun n:ℕ ↦ (10:ℚ) ^ (-(n:ℤ)-1) ):Sequence) := by
+  by_contra h
+  rw [Rat.Steady.coe] at h
+  specialize h 0 1
+  norm_num at h
+  unfold Rat.Close at h
+  rw [abs_of_nonneg (by positivity)] at h
+  norm_num at h
 
 /-- Example 5.1.5: The sequence 1, 2, 4, 8, ... is not ε-steady for any ε. Left as an exercise.
 -/
-example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by sorry
+example (ε:ℚ) : ¬ ε.Steady ((fun n:ℕ ↦ (2 ^ (n+1):ℚ) ):Sequence) := by
+  intro h
+  rw [Rat.Steady.coe] at h
+  obtain ⟨ n, hn ⟩ := exists_nat_gt ε
+  specialize h 0 n
+  unfold Rat.Close at h
+  norm_num at h
+  rw [abs_sub_comm, abs_of_nonneg (by
+    have : (2:ℚ)^1 ≤ 2 ^ (n + 1) := by gcongr; norm_num; omega
+    norm_num at this
+    linarith
+  )] at h
+  suffices h : (2:ℚ) ^ (n + 1) - 2 ≥ (n:ℚ)
+  · have : (2:ℚ) ^ (n + 1) - 2 < (n:ℚ) := by linarith
+    linarith
+  clear h hn ε
+  induction' n with n IH
+  · norm_num
+  rw [show (2:ℚ) ^ (n + 1 + 1) = (2:ℚ) ^ (n + 1) + (2:ℚ) ^ (n + 1) by ring]
+  suffices : (2:ℚ) ^ (n + 1) ≥ 1
+  · push_cast
+    linarith
+  rw [show (1:ℚ) = (2:ℚ) ^ 0 by norm_num]
+  gcongr
+  · norm_num
+  · omega
 
-/-- Example 5.1.5:The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
+/-- Example 5.1.5: The sequence 2, 2, 2, ... is ε-steady for any ε > 0.
 -/
 example (ε:ℚ) (hε: ε>0) : ε.Steady ((fun _:ℕ ↦ (2:ℚ) ):Sequence) := by
   rw [Rat.Steady.coe]; simp [Rat.Close]; positivity
@@ -208,6 +240,19 @@ abbrev Sequence.from (a:Sequence) (n₁:ℤ) : Sequence :=
 lemma Sequence.from_eval (a:Sequence) {n₁ n:ℤ} (hn: n ≥ n₁) :
   (a.from n₁) n = a n := by simp [hn]; intro h; exact (a.vanish _ h).symm
 
+lemma Rat.Steady.coe_from_coe (ε : ℚ) (n₁ : ℕ) (a:ℕ → ℚ) :
+    ε.Steady ((a:Sequence).from n₁) ↔ ∀ n ≥ n₁, ∀ m ≥ n₁, ε.Close (a n) (a m) := by
+  constructor
+  · intro h n hn m hm
+    specialize h n (by simp ; omega) m (by simp ; omega)
+    simp_all
+
+  intro h n hn m hm
+  simp at hn hm
+  lift n to ℕ using (by omega)
+  lift m to ℕ using (by omega)
+  simp_all
+
 end Chapter5
 
 /-- Definition 5.1.6 (Eventually ε-steady) -/
@@ -216,8 +261,53 @@ abbrev Rat.EventuallySteady (ε: ℚ) (a: Chapter5.Sequence) : Prop := ∃ N ≥
 lemma Rat.eventuallySteady_def (ε: ℚ) (a: Chapter5.Sequence) :
   ε.EventuallySteady a ↔ ∃ N ≥ a.n₀, ε.Steady (a.from N) := by rfl
 
-namespace Chapter5
+lemma Rat.eventuallySteady_def' (ε: ℚ) (a: Chapter5.Sequence) :
+  ε.EventuallySteady a ↔ ∃ N ≥ a.n₀, ∀ i ≥ N, ∀ j ≥ N, |a i - a j| ≤ ε := by
+  rw [Rat.eventuallySteady_def]
+  constructor
+  · intro h
+    obtain ⟨ N, hN, h' ⟩ := h
+    use N
+    constructor
+    . exact hN
+    intro i hi j hj
+    specialize h' i (by simp; omega) j (by simp ; omega)
+    rw [Chapter5.Sequence.from_eval _ (by omega)] at h'
+    rw [Chapter5.Sequence.from_eval _ (by omega)] at h'
+    unfold Rat.Close at h'
+    exact h'
 
+  intro h
+  obtain ⟨ N, hN, h' ⟩ := h
+  use N
+  constructor
+  . exact hN
+  intro i hi j hj
+  simp at hi hj
+  rw [Chapter5.Sequence.from_eval _ (by omega)]
+  rw [Chapter5.Sequence.from_eval _ (by omega)]
+  specialize h' i (by omega) j (by omega)
+  unfold Rat.Close
+  exact h'
+
+lemma Rat.EventuallySteady.coe (ε: ℚ) (a: ℕ → ℚ) :
+  ε.EventuallySteady a ↔ ∃ N:ℕ, ε.Steady ((a:Chapter5.Sequence).from N) := by
+  constructor
+  intro h
+  rw [Rat.eventuallySteady_def] at h
+  simp at h
+  obtain ⟨ N, hN, h' ⟩ := h
+  lift N to ℕ using hN
+  use N
+  intro h
+  obtain ⟨ N, h' ⟩ := h
+  rw [Chapter5.Rat.Steady.coe_from_coe] at h'
+  use N
+  simp
+  rw [Chapter5.Rat.Steady.coe_from_coe]
+  exact h'
+
+namespace Chapter5
 
 /--
 Example 5.1.7: The sequence 1, 1/2, 1/3, ... is not 0.1-steady
@@ -232,7 +322,8 @@ Example 5.1.7: The sequence a_10, a_11, a_12, ... is 0.1-steady
 -/
 lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):Sequence).from 10) := by
   rw [Rat.Steady]
-  intro n hn m hm; simp at hn hm
+  intro n hn m hm
+  simp at hn hm
   lift n to ℕ using (by omega)
   lift m to ℕ using (by omega)
   simp_all [Rat.Close]
@@ -243,7 +334,8 @@ lemma Sequence.ex_5_1_7_b : (0.1:ℚ).Steady (((fun n:ℕ ↦ (n+1:ℚ)⁻¹ ):S
   have : ((n:ℚ) + 1)⁻¹ ≤ ((m:ℚ) + 1)⁻¹ := by gcongr
   rw [abs_of_nonneg (by linarith), show (0.1:ℚ) = (10:ℚ)⁻¹ - 0 by norm_num]
   gcongr
-  · norm_cast; omega
+  · norm_cast
+    omega
   positivity
 
 /--
@@ -253,12 +345,20 @@ lemma Sequence.ex_5_1_7_c : (0.1:ℚ).EventuallySteady ((fun n:ℕ ↦ (n+1:ℚ)
   ⟨10, by simp, ex_5_1_7_b⟩
 
 /--
-Example 5.1.7
-
-The sequence 10, 0, 0, ... is eventually ε-steady for every ε > 0. Left as an exercise.
+Example 5.1.7: The sequence 10, 0, 0, ... is eventually ε-steady for every ε > 0. Left as an exercise.
 -/
 lemma Sequence.ex_5_1_7_d {ε:ℚ} (hε:ε>0) :
-    ε.EventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by sorry
+    ε.EventuallySteady ((fun n:ℕ ↦ if n=0 then (10:ℚ) else (0:ℚ) ):Sequence) := by
+  use 1
+  constructor
+  simp
+  unfold Rat.Steady
+  intro n hn m hm
+  simp at hn hm
+  simp [show 0 ≤ n by omega, show 0 ≤ m by omega, hn, hm, show ¬(n ≤ 0) by omega, show ¬(m ≤ 0) by omega]
+  unfold Rat.Close
+  norm_num
+  positivity
 
 abbrev Sequence.IsCauchy (a:Sequence) : Prop := ∀ ε > (0:ℚ), ε.EventuallySteady a
 
@@ -297,6 +397,8 @@ lemma Sequence.IsCauchy.mk {n₀:ℤ} (a: {n // n ≥ n₀} → ℚ) :
     specialize h' j _ k _ <;> try omega
     simp_all [show n₀ ≤ j by omega, show n₀ ≤ k by omega]
     exact h'
+
+  obtain ⟨ N, hN, h' ⟩ := h ε hε
   refine ⟨ max n₀ N, by simp, ?_ ⟩
   intro n hn m hm; simp_all
   apply h' n _ m <;> omega
@@ -366,6 +468,35 @@ abbrev Sequence.BoundedBy (a:Sequence) (M:ℚ) : Prop := ∀ n, |a n| ≤ M
 lemma Sequence.boundedBy_def (a:Sequence) (M:ℚ) :
   a.BoundedBy M ↔ ∀ n, |a n| ≤ M := by rfl
 
+lemma Sequence.BoundedBy.coe (a : (ℕ → ℚ)) (M:ℚ) :
+  (a:Sequence).BoundedBy M  ↔ ∀ n, |a n| ≤ M := by
+  unfold BoundedBy
+  simp
+  constructor
+  intro h n
+  specialize h n
+  simp at h
+  exact h
+
+  intro h n
+  obtain npos | nneg := le_or_gt 0 n
+  · lift n to ℕ using npos
+    grind
+
+  · have Mpos := (Section_4_3.abs_nonneg (a 0)).trans (h 0)
+    simp [Int.not_le.mpr nneg, Mpos]
+
+lemma boundedBy_of_boundedBy_of_lt {a b : ℚ} {s : Sequence} (h : a ≤ b) ( hs : s.BoundedBy a) : s.BoundedBy b := by
+  intro n
+  specialize hs n
+  linarith
+
+lemma Sequence.BoundedBy.bound_nonneg (a : Sequence) (M : ℚ) (h : a.BoundedBy M) : 0 ≤ M := by
+  unfold BoundedBy at h
+  specialize h (a.n₀ - 1)
+  simp_all [a.vanish (a.n₀ - 1) (by omega)]
+
+
 abbrev Sequence.IsBounded (a:Sequence) : Prop := ∃ M ≥ 0, a.BoundedBy M
 
 /-- Definition 5.1.12 (bounded sequences) -/
@@ -375,8 +506,20 @@ lemma Sequence.isBounded_def (a:Sequence) :
 /-- Example 5.1.13 -/
 example : BoundedBy ![1,-2,3,-4] 4 := by intro i; fin_cases i <;> norm_num
 
-/-- Example 5.1.13 -/
-example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by sorry
+lemma Sequence.IsBounded.coe (a : (ℕ → ℚ))
+: (a:Sequence).IsBounded ↔ ∃ M ≥ 0, ∀ i, |a i| ≤ M := by
+  unfold IsBounded
+  constructor
+  intro h
+  obtain ⟨ M, h ⟩ := h
+  rw [BoundedBy.coe] at h
+  use M
+
+  intro h
+  obtain ⟨ M, h ⟩ := h
+  use M
+  rw [BoundedBy.coe]
+  exact h
 
 /-- Example 5.1.13 -/
 example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
@@ -384,6 +527,74 @@ example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
   intro i; by_cases h: 0 ≤ i <;> simp [h]
 
 /-- Example 5.1.13 -/
+example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
+  use 1
+  constructor
+  · norm_num
+  intro i
+  obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
+
+
+lemma isBounded_iff_of_minimum (m₀ : ℚ) (s : Sequence) :
+  s.IsBounded ↔ ∃ M > m₀, s.BoundedBy  M := by
+  constructor
+  intro h
+  obtain ⟨ M, h1, h2 ⟩ := h
+  use (max m₀ M) + 1
+  constructor
+  exact lt_add_of_le_of_pos (le_max_left m₀ M) rfl
+  have : M ≤ (max m₀ M + 1) := by linarith [le_max_right m₀ M]
+  exact boundedBy_of_boundedBy_of_lt this h2
+
+  intro h
+  obtain ⟨ M, h1, h2 ⟩ := h
+  use max 0 M
+  constructor
+  positivity
+  exact boundedBy_of_boundedBy_of_lt (le_max_right 0 M) h2
+
+/--
+Example 5.1.13
+
+The finite sequence 1, -2, 3, -4 is bounded by 4.
+-/
+example : BoundedBy ![1,-2,3,-4] 4 := by
+  intro i
+  fin_cases i <;> norm_num
+
+/--
+Example 5.1.13
+
+The infinite sequence 1, -2, 3, -4, ... is unbounded. Left as an exercise.
+-/
+example : ¬ ((fun n:ℕ ↦ (-1)^n * (n+1:ℚ)):Sequence).IsBounded := by
+  by_contra h
+  rw [Sequence.IsBounded.coe] at h
+  obtain ⟨ M, h1, h2 ⟩ := h
+  have ⟨ M', hM' ⟩ := exists_nat_gt M
+  specialize h2 M'
+  rw [abs_mul] at h2
+  simp at h2
+  rw [abs_of_nonneg (by positivity)] at h2
+  linarith
+
+/--
+Example 5.1.13
+
+The sequence (-1)^n is bounded by 1.
+-/
+example : ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsBounded := by
+  use 1
+  constructor
+  · norm_num
+  intro i
+  obtain h | h := Decidable.em (0 ≤ i) <;> simp [h]
+
+/--
+Example 5.1.13
+
+The sequence (-1)^n is not Cauchy.
+-/
 example : ¬ ((fun n:ℕ ↦ (-1:ℚ)^n):Sequence).IsCauchy := by
   rw [Sequence.IsCauchy.coe]
   by_contra h; specialize h (1/2 : ℚ) (by norm_num)
@@ -410,8 +621,78 @@ lemma IsBounded.finite {n:ℕ} (a: Fin n → ℚ) : ∃ M ≥ 0,  BoundedBy a M 
   . grind
   convert h2; simp
 
-/-- Lemma 5.1.15 (Cauchy sequences are bounded) / Exercise 5.1.1 -/
-lemma Sequence.isBounded_of_isCauchy {a:Sequence} (h: a.IsCauchy) : a.IsBounded := by
-  sorry
+def max_prefix : ((ℕ → ℚ)) → ℕ → ℚ
+| _, 0   => 0
+| f, x+1 => max (f x) (max_prefix f x)
+
+theorem mp_increasing (f : ℕ → ℚ) (a : ℕ) (b : ℕ) (hi : a < b): f a ≤ max_prefix f b := by
+  induction b
+  case zero =>
+    omega
+  case succ b IH =>
+    rw [max_prefix, le_sup_iff]
+    obtain p | q := show a < b ∨ a = b by omega
+    . right; exact IH p
+    . left; rw [q]
+
+theorem finitePrefix' (f : ℕ → ℚ) (N : ℕ) : ∃ B, ∀ n : ℕ, n < N → f n ≤ B := by
+  use max_prefix f N
+  intro n hnB
+  apply mp_increasing
+  exact hnB
+
+theorem finitePrefix (f : ℕ → ℚ) (N : ℕ) : ∃ B ≥ 0, ∀ n : ℕ, n < N → |f n| ≤ B := by
+  have ⟨ B, h ⟩ := finitePrefix' (fun n ↦ |f n|) N
+  use (max B 0)
+  constructor
+  . positivity
+  exact fun n a ↦ le_sup_of_le_left (h n a)
+
+theorem test (s : Sequence): ∃ (M:ℚ), M ≥ 0 ∧ ∀ i:ℤ, i ≤ 0 → |s i| ≤ M := by
+  by_cases 0 < s.n₀
+  . use 0, by norm_num
+    intro i _
+    simp [s.vanish i (by omega)]
+
+  obtain ⟨ n₀', h ⟩ := show ∃ n₀' : ℕ, s.n₀ = -n₀' by use (-s.n₀).toNat; simp_all
+  obtain ⟨ B, h1, h2 ⟩ := finitePrefix (fun i ↦ s (s.n₀ + i)) (n₀' + 1)
+  use B, h1
+  rw [h] at h2
+  intro i hi
+
+  by_cases (i < s.n₀)
+  · simp [s.vanish i (by omega), h1]
+
+  specialize h2 (n₀' + i).toNat (by omega)
+  rw [Int.ofNat_toNat, max_eq_left (by linarith)] at h2
+  ring_nf at h2
+  exact h2
+
+lemma Sequence.isBounded_of_isCauchy {s:Sequence} (h: s.IsCauchy) : s.IsBounded := by
+  specialize h (1:ℚ) (by norm_num)
+  rw [Rat.eventuallySteady_def'] at h
+  obtain ⟨ N, h1, h ⟩ := h
+  specialize h N (by omega)
+
+  obtain ⟨ M, hM, h2 ⟩ := test s
+  obtain ⟨ B, h4, h5 ⟩  := finitePrefix (fun n ↦ s.seq n) N.toNat
+
+  have lt_N_bound (i : ℤ) (hi : i < N) : |s.seq i| ≤ max M B := by
+    obtain _ | _ := show (i < 0) ∨ (0 ≤ i) by omega
+    · linarith [show M ≤ max M B by exact le_max_left M B, h2 i (by omega)]
+    specialize h5 i.toNat (by omega)
+    simp_all
+
+  have ge_n_bound (j : ℤ) (hj : j ≥ N) : |s.seq j| ≤ |s.seq N| + 1 := by calc
+      _ = |s.seq N + (s.seq j - s.seq N)| := by congr; ring
+      _ ≤ |s.seq N| + |s.seq j - s.seq N| := abs_add (s.seq N) (s.seq j - s.seq N)
+      _ ≤ _ := by gcongr ;simp_all [abs_sub_comm, h j hj]
+
+  use max (max M B) (|s.seq N| + 1), (by positivity)
+
+  intro i
+  by_cases (i < N)
+  · simp [lt_N_bound i (by omega)]
+  · simp [ge_n_bound i (by omega)]
 
 end Chapter5

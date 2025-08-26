@@ -47,6 +47,9 @@ theorem Series.eval_coe (a : ℕ → ℝ) (n : ℕ) : (a : Series).seq n = a n :
 @[simp]
 theorem Series.eval_coe_at_int (a : ℕ → ℝ) (n : ℤ) : (a : Series).seq n = if n ≥ 0 then a n.toNat else 0 := by norm_cast
 
+@[simp]
+theorem Series.m_coe (a : ℕ → ℝ) : (a : Series).m = 0 := by rfl
+
 abbrev Series.mk' {m:ℤ} (a: { n // n ≥ m } → ℝ) : Series where
   m := m
   seq n := if h : n ≥ m then a ⟨n, h⟩ else 0

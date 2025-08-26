@@ -80,7 +80,6 @@ infix:100 " —— " => Int.formalDiff
 theorem Int.eq (a b c d:ℕ): a —— b = c —— d ↔ a + d = c + b :=
   ⟨ Quotient.exact, by intro h; exact Quotient.sound h ⟩
 
-
 /-- Decidability of equality -/
 instance Int.decidableEq : DecidableEq Int := by
   intro a b
@@ -174,6 +173,7 @@ example : 3 = 3 —— 0 := rfl
 example : 3 = 4 —— 1 := by rw [Int.ofNat_eq, Int.eq]
 
 /-- (Not from textbook) 0 is the only natural whose cast is 0 -/
+@[grind]
 lemma Int.cast_eq_0_iff_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by
   constructor
   intro h
@@ -489,19 +489,24 @@ lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
 
 lemma Int.pos_iff_gt_0 {a : Int} : a.IsPos ↔ 0 < a := by
   constructor
-  intro h
-  rcases h with ⟨ w, hw ⟩
-  constructor
-  use w
-  ring_nf
-  exact hw.2
-  by_contra h
-  rw [← h] at hw
-  have := hw.2.symm
-  rw [cast_eq_0_iff_eq_0] at this
-  omega
+  · intro h
+    rcases h with ⟨ w, hw ⟩
+    constructor
+    · use w
+      grind
+    · by_contra h
+      have := cast_eq_0_iff_eq_0
+      grind
 
-  sorry
+  · intro h
+    rw [lt_iff] at h
+    obtain ⟨ w, hw ⟩ := h.1
+    use w
+    constructor
+    · simp at hw
+      have := cast_eq_0_iff_eq_0
+      grind
+    · grind
 
 lemma Int.neg_iff_lt_0 {a : Int} : a.IsNeg ↔ a < 0 := by
   sorry

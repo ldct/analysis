@@ -128,7 +128,6 @@ theorem Series.permuted_zeta_2_eq_zeta_2 :
 theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConverges)
   {f: ℕ → ℕ} (hf: Function.Bijective f) :
     (fun n ↦ a (f n):Series).absConverges  ∧ (a:Series).sum = (fun n ↦ a (f n) : Series).sum := by
-<<<<<<< HEAD
   -- This proof is written to follow the structure of the original text.
   set L := (a:Series).abs.sum
   have hconv := converges_of_absConverges ha
@@ -194,9 +193,6 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
       simp [Series.partial, sum_eq_sum _ hM'_pos, sum_eq_sum _ hNpos]; grind
     _ = ε := by ring
 
-=======
-  sorry
->>>>>>> 8f00b92 (Fill in examples)
 
 /-- Example 7.4.4 -/
 noncomputable abbrev Series.a_7_4_4 : ℕ → ℝ := fun n ↦ (-1:ℝ)^n / (n+2)

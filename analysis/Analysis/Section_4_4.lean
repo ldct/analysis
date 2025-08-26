@@ -39,8 +39,7 @@ theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y
   -- The reader is encouraged to find shorter proofs, for instance
   -- using Mathlib's `linarith` tactic.
   use (x+y)/2
-  constructor
-  all_goals linarith
+  constructor <;> linarith
 
 /-- Exercise 4.4.2 -/
 theorem Nat.no_infinite_descent : ¬ ∃ a:ℕ → ℕ, ∀ n, a (n+1) < a n := by

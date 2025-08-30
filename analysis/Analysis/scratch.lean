@@ -176,7 +176,7 @@ lemma Int.pos_iff_gt_0 {a : Int} : a.IsPos → 0 < a := by
   · use w
     grind
   · by_contra h
-    have := cast_eq_0_iff_eq_0
+    have := cast_eq_0_iff_eq_0 -- grind fails when I remove this
     grind
 
 structure RealIsometry where

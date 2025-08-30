@@ -565,10 +565,16 @@ instance Int.decidableRel : DecidableRel (· ≤ · : Int → Int → Prop) := b
     cases (a + d).decLe (b + c) with
       | isTrue h =>
         apply isTrue
-        sorry
+        let n := b + c - (a + d)
+        use n
+        rw [natCast_eq, add_eq, eq, show n = (b + c - (a + d)) by rfl]
+        grind
       | isFalse h =>
         apply isFalse
-        sorry
+        by_contra h2
+        obtain ⟨ m, hm ⟩ := h2
+        rw [natCast_eq, add_eq, eq] at hm
+        grind
   exact Quotient.recOnSubsingleton₂ n m this
 
 theorem Int.lt_of_le_of_lt {a b c : Int} (hab: a ≤ b) (hbc: b < c) : a < c := by

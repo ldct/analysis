@@ -325,6 +325,8 @@ instance Rat.instCommRing : CommRing Rat where
 instance Rat.instRatCast : RatCast Rat where
   ratCast q := q.num // q.den
 
+theorem Rat.natCast_eq (n:ℕ) : (n:Rat) = n // 1 := rfl
+
 theorem Rat.ratCast_inj : Function.Injective (fun n:ℚ ↦ (n:Rat)) := by
   intro a b h
   dsimp at h
@@ -405,17 +407,80 @@ def Rat.IsPos (q:Rat) : Prop := ∃ a b:ℤ, a > 0 ∧ b > 0 ∧ q = a/b
 /-- Definition 4.2.6 (negativity) -/
 def Rat.IsNeg (q:Rat) : Prop := ∃ r:Rat, r.IsPos ∧ q = -r
 
+lemma Rat.not_isPos_zero_div (a : ℤ) : ¬ (0 // a).IsPos := by
+  intro h
+  obtain ⟨ p, q, h1, h2, h3 ⟩ := h
+  lift p to ℕ using by positivity
+  lift q to ℕ using by positivity
+  norm_cast at h3
+  rw [natCast_eq, natCast_eq, div_eq, inv_eq _ (by positivity), mul_eq _ _ (by positivity) (by positivity)] at h3
+  grind
+
+lemma Rat.not_isPos_div_zero (a : ℤ) : ¬ (a // 0).IsPos := by grind [not_isPos_zero_div]
+
+lemma Rat.test1
+  (a b : ℤ)
+  (h : (a // b).IsPos) (ha : 0 < a) (hb : b < 0) : False := by
+  obtain ⟨ p, q, h1, h2, h3 ⟩ := h
+  lift p to ℕ  using by positivity
+  lift q to ℕ  using by positivity
+  norm_cast at h3
+  rw [natCast_eq, natCast_eq, div_eq, inv_eq _ (by positivity), mul_eq _ _ (by positivity) (by positivity)] at h3
+  ring_nf at h3
+  rw [eq _ _ (by omega) (by positivity)] at h3
+  have h4 : 0 < a * q := by positivity
+  have h5 : 0 * 0 < p * (-b) := by
+    gcongr
+    linarith
+  linarith
+
+lemma Rat.test2
+  (a b : ℤ)
+  (h : (a // b).IsPos) (ha : a < 0) (hb : 0 < b) : False := by
+  obtain ⟨ p, q, h1, h2, h3 ⟩ := h
+  lift p to ℕ using by positivity
+  lift q to ℕ using by positivity
+  norm_cast at h3
+  rw [natCast_eq, natCast_eq, div_eq, inv_eq _ (by positivity), mul_eq _ _ (by positivity) (by positivity)] at h3
+  ring_nf at h3
+  rw [eq _ _ (by omega) (by positivity)] at h3
+  have h4 : 0 < b * p := by positivity
+  have h5 : 0 * 0 < q * (-a) := by
+    gcongr
+    linarith
+  linarith
+
+
 lemma Rat.isPos_div (a b : ℤ) : (a // b).IsPos ↔ (0 < a ∧ 0 < b) ∨ (a < 0 ∧ b < 0) := by
   constructor
   · intro h
     obtain ha | rfl | ha : 0 < a ∨ 0 = a ∨ a < 0 := by grind
     obtain hb | rfl | hb : 0 < b ∨ 0 = b ∨ b < 0 := by grind
-    grind
-    exfalso
-    rw [div_zero] at h
+    · grind
+    · exfalso
+      exact not_isPos_div_zero a h
+    · exfalso
+      exact test1 a b h ha hb
+    · exfalso
+      exact not_isPos_zero_div b h
+    obtain hb | rfl | hb : 0 < b ∨ 0 = b ∨ b < 0 := by grind
+    · exfalso
+      exact test2 a b h ha hb
+    · exfalso
+      exact not_isPos_div_zero a h
+    · grind
 
-    repeat sorry
-  repeat sorry
+  · intro h
+    obtain h | h := h
+    use a, b
+    grind
+    use (-a), (-b)
+    constructor
+    grind
+    constructor
+    grind
+    rw [coe_Int_eq, coe_Int_eq, div_eq, inv_eq, mul_eq, eq]
+    all_goals grind
 
 lemma Rat.isNeg_div (a b : ℤ) : (a // b).IsNeg ↔ (a < 0 ∧ 0 < b) ∨ (0 < a ∧ b < 0) := by
   sorry

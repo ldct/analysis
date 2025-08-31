@@ -175,14 +175,7 @@ example : 3 = 4 —— 1 := by rw [Int.ofNat_eq, Int.eq]
 /-- (Not from textbook) 0 is the only natural whose cast is 0 -/
 @[grind]
 lemma Int.cast_eq_0_iff_eq_0 (n : ℕ) : (n : Int) = 0 ↔ n = 0 := by
-  constructor
-  intro h
-  rw [show (0 : Int) = ((0 : Nat) : Int) by rfl] at h
-  rw [natCast_inj] at h
-  exact h
-  intro h
-  rw [h]
-  simp
+  exact ofNat_inj n 0
 
 
 /-- Definition 4.1.4 (Negation of integers) / Exercise 4.1.2 -/
@@ -231,15 +224,9 @@ theorem Int.not_pos_neg (x:Int) : x.IsPos ∧ x.IsNeg → False := by
   linarith
 
 @[simp]
-theorem Int.eq_0' (a b : ℕ) : a——b = 0 ↔ a = b := by
+theorem Int.eq_0' (a b : ℕ) : a ——b = 0 ↔ a = b := by
   rw [show (0 : Int) = 0 —— 0 by rfl]
-  constructor
-  intro h
-  simp at h
-  omega
-  intro h
-  rw [h, eq]
-  omega
+  grind
 
 /-- Proposition 4.1.6 (laws of algebra) / Exercise 4.1.4 -/
 instance Int.instAddGroup : AddGroup Int :=
@@ -376,43 +363,27 @@ theorem Int.lt_iff (a b:Int): a < b ↔ (∃ t:ℕ, b = a + t) ∧ a ≠ b := by
 /-- Lemma 4.1.11(a) (Properties of order) / Exercise 4.1.7 -/
 theorem Int.lt_iff_exists_positive_difference (a b:Int) : a < b ↔ ∃ n:ℕ, n ≠ 0 ∧ b = a + n := by
   constructor
-  intro h
-  rw [lt_iff] at h
-  rcases h.1 with ⟨ c, hc ⟩
-  use c
-  constructor
-  intro h2
-  rw [h2] at hc
-  simp at hc
-  have h3 := h.2.symm
-  exact h3 hc
-  exact hc
-  intro h
-  rcases h with ⟨ n, ⟨h1, h2⟩  ⟩
+  · intro h
+    rw [lt_iff] at h
+    rcases h.1 with ⟨ c, hc ⟩
+    use c
+    constructor
+    · rintro rfl
+      grind [Nat.cast_zero, add_zero]
+    · exact hc
+  rintro ⟨ n, ⟨h1, h2⟩  ⟩
   rw [lt_iff]
   constructor
-  use n
-  intro h
-  rw [h] at h2
-  simp at h2
-  rw [natCast_eq] at h2
-  simp at h2
-  exact h1 h2
+  · use n
+  · grind [left_eq_add, natCast_eq]
 
 /-- Lemma 4.1.11(b) (Addition preserves order) / Exercise 4.1.7 -/
 theorem Int.add_lt_add_right {a b:Int} (c:Int) (h: a < b) : a+c < b+c := by
   rw [lt_iff] at *
-  rcases h with ⟨ h1, h2⟩
-  rcases h1 with ⟨ n, h3 ⟩
+  rcases h with ⟨ ⟨ n, h3 ⟩, h2⟩
   constructor
   use n
-  rw [h3]
-  ring
-  by_contra h
-  have : b + c - c = b := by ring
-  rw [←h] at this
-  ring_nf at this
-  exact h2 this
+  all_goals grind
 
 /-- Lemma 4.1.11(c) (Positive multiplication preserves order) / Exercise 4.1.7 -/
 theorem Int.mul_lt_mul_of_pos_right {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c < b*c := by
@@ -421,10 +392,8 @@ theorem Int.mul_lt_mul_of_pos_right {a b c:Int} (hab : a < b) (hc: 0 < c) : a*c 
   rcases hc with ⟨ m, ⟨hm1, hm2⟩⟩
   use n * m
   constructor
-  positivity
-  rw [hn2, hm2]
-  simp
-  ring
+  · positivity
+  · grind [zero_add, Nat.cast_mul]
 
 theorem Int.mul_le_mul_of_nonneg_right {a b c:Int} (hab : a ≤ b) (hc: 0 ≤ c) : a*c ≤ b*c := by
   rw [le_iff] at *
@@ -441,20 +410,16 @@ theorem Int.neg_gt_neg {a b:Int} (h: b < a) : -a < -b := by
   rcases h with ⟨ n, ⟨hn1, hn2⟩⟩
   rw [lt_iff]
   constructor
-  use n
-  rw [hn2]
-  ring
-  rw [hn2]
-  intro h
-  ring_nf at h
-  have h' : (-b - ↑n) + b = -b + b := by
-    rw [h]
-  rw [show  -(b : Int) + b = 0 by ring] at h'
-  rw [show -(b : Int) - n + b = -n by ring] at h'
-  simp at h'
-  rw [natCast_eq] at h'
-  simp at h'
-  exact hn1 h'
+  · use n
+    grind
+  · rw [hn2]
+    intro h
+    ring_nf at h
+    have h' : (-b - ↑n) + b = -b + b := by
+      rw [h]
+    rw [show  -(b : Int) + b = 0 by ring] at h'
+    rw [show -(b : Int) - n + b = -n by ring] at h'
+    grind [natCast_eq]
 
 /-- Lemma 4.1.11(d) (Negation reverses order) / Exercise 4.1.7 -/
 theorem Int.neg_ge_neg {a b:Int} (h: b ≤ a) : -a ≤ -b := by
@@ -469,13 +434,9 @@ theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by
   rcases hab with ⟨ n, ⟨hn1, hn2⟩⟩
   rcases hbc with ⟨ m, ⟨hm1, hm2⟩⟩
   use n + m
-  constructor
-  positivity
-  simp [hn2, hm2]
-  ring
+  grind [Nat.cast_add]
 
--- todo rename
-lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
+lemma Int.lt_iff_gt_0 { a b : Int } : a < b ↔ 0 < (b - a) := by
   constructor
   intro h
   have := add_lt_add_right (-a) h
@@ -488,7 +449,7 @@ lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
   ring_nf at this
   exact this
 
-lemma Int.lt_iff_lt_zero { a b : Int } : a < b ↔ a - b < 0 := by
+lemma Int.lt_iff_lt_0 { a b : Int } : a < b ↔ a - b < 0 := by
   constructor
   intro h
   have := add_lt_add_right (-b) h
@@ -547,37 +508,37 @@ lemma Int.trichotomous0 (a :Int) : a = 0 ∨ 0 < a ∨ a < 0 := by
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.trichotomous' (a b:Int) : a > b ∨ a < b ∨ a = b := by
-  rw [lt_iff_pos]
-  rw [show a > b ↔ b < a by rfl, lt_iff_pos]
+  rw [lt_iff_gt_0]
+  rw [show a > b ↔ b < a by rfl, lt_iff_gt_0]
   have := trichotomous0 (a - b)
   obtain h | h | h := this
   · grind
   · grind
   · right
     left
-    rw [← lt_iff_pos]
-    -- grind [lt_iff_lt_zero] why no work
-    rwa [← lt_iff_lt_zero] at h
+    rw [← lt_iff_gt_0]
+    -- grind [lt_iff_lt_0] why no work
+    rwa [← lt_iff_lt_0] at h
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_gt_and_lt (a b:Int) : ¬ (a > b ∧ a < b):= by
   intro h
   apply not_pos_neg (b - a)
-  rw [pos_iff_gt_0, neg_iff_lt_0, ← lt_iff_pos, ← lt_iff_lt_zero]
+  rw [pos_iff_gt_0, neg_iff_lt_0, ← lt_iff_gt_0, ← lt_iff_lt_0]
   tauto
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by
   rintro h
   apply not_pos_zero (b - a)
-  rw [pos_iff_gt_0, ← lt_iff_pos]
+  rw [pos_iff_gt_0, ← lt_iff_gt_0]
   grind
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by
   rintro h
   apply not_neg_zero (a - b)
-  rw [neg_iff_lt_0, ← lt_iff_lt_zero]
+  rw [neg_iff_lt_0, ← lt_iff_lt_0]
   grind
 
 /-- (Not from textbook) 0 is the only additive identity -/
@@ -694,17 +655,17 @@ instance Int.instLinearOrder : LinearOrder Int where
     rcases hbc with ⟨ m, ⟨hm1, hm2⟩⟩
     use n + m
     grind [Nat.cast_add]
-  lt_iff_le_not_ge := by
-    intro a b
-    constructor
-    intro h
-    constructor
-    . exact h.1
-    by_contra h2
-    exact not_lt_self (lt_of_le_of_lt h2 h)
-    rintro ⟨ h1, h2 ⟩
+  lt_iff_le_not_ge a b := by
     rw [lt_iff, ← le_iff]
-    grind
+    constructor
+    · intro h
+      constructor
+      · exact h.1
+      · by_contra h2
+        grind [not_lt_self, lt_of_le_of_lt]
+        exact not_lt_self (lt_of_le_of_lt h2 h)
+    · rintro ⟨ h1, h2 ⟩
+      grind
   le_antisymm := fun _ _ h1 h2 ↦ le_antisymm h1 h2
   le_total a b := by
     rw [le_iff_lt_or_eq, le_iff_lt_or_eq]
@@ -719,23 +680,17 @@ theorem Int.neg_one_mul (a:Int) : -1 * a = -a := by
 /-- Exercise 4.1.8 -/
 theorem Int.no_induction : ∃ P: Int → Prop, P 0 ∧ ∀ n, P n → P (n+1) ∧ ¬ ∀ n, P n := by
   use fun n => 0 ≤ n
-  dsimp
   constructor
-  simp
+  norm_num
   intro n hn
   constructor
-  rw [le_iff] at *
-  cases' hn with w hw
-  simp at hw
-  use w + 1
-  simp [hw]
-  by_contra h
-  have : (-1 : Int) ≤ 0 := by
-    rw [le_iff]
-    use 1
-    simp
-  have := le_antisymm (h (-1)) this
-  simp at this
+  · rw [le_iff] at *
+    obtain ⟨ w, hw ⟩ := hn
+    use w + 1
+    simp [hw]
+  · by_contra h
+    have := le_antisymm (h (-1)) (by decide)
+    simp_all
 
 
 /-- A nonnegative number squared is nonnegative. This is a special case of 4.1.9 that's useful for proving the general case. --/
@@ -746,7 +701,7 @@ lemma Int.sq_nonneg_of_pos (n:Int) (h: 0 ≤ n) : 0 ≤ n*n := by
 
 /-- Exercise 4.1.9. The square of any integer is nonnegative. -/
 theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by
-  cases' Int.trichotomous' n 0 with h1 h2
+  obtain h1 | h2 := Int.trichotomous' n 0
   · exact Int.sq_nonneg_of_pos _ (by grind)
   · cases' h2 with h2 h3
     · have h3 : 0 < -n := neg_gt_neg h2

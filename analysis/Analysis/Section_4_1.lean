@@ -474,6 +474,7 @@ theorem Int.lt_trans {a b c:Int} (hab: a < b) (hbc: b < c) : a < c := by
   simp [hn2, hm2]
   ring
 
+-- todo rename
 lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
   constructor
   intro h
@@ -484,6 +485,18 @@ lemma Int.lt_iff_pos { a b : Int } : a < b ↔ 0 < (b - a) := by
 
   intro h
   have := add_lt_add_right a h
+  ring_nf at this
+  exact this
+
+lemma Int.lt_iff_lt_zero { a b : Int } : a < b ↔ a - b < 0 := by
+  constructor
+  intro h
+  have := add_lt_add_right (-b) h
+  ring_nf at this
+  grind
+
+  intro h
+  have := add_lt_add_right b h
   ring_nf at this
   exact this
 
@@ -509,26 +522,63 @@ lemma Int.pos_iff_gt_0 {a : Int} : a.IsPos ↔ 0 < a := by
     · grind
 
 lemma Int.neg_iff_lt_0 {a : Int} : a.IsNeg ↔ a < 0 := by
-  sorry
+  constructor
+  intro h
+  rcases h with ⟨ w, hw ⟩
+  constructor
+  · use w
+    grind
+  · by_contra h
+    have := cast_eq_0_iff_eq_0
+    grind
 
-lemma Int.trichotomous0 (a :Int) : 1 = 2 := by
+  intro h
+  rw [lt_iff] at h
+  obtain ⟨ w, hw ⟩ := h.1
+  use w
+  constructor
+  · have := cast_eq_0_iff_eq_0
+    grind
+  · grind
+
+lemma Int.trichotomous0 (a :Int) : a = 0 ∨ 0 < a ∨ a < 0 := by
   have := trichotomous a
-  sorry
+  rwa [pos_iff_gt_0, neg_iff_lt_0] at this
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
 theorem Int.trichotomous' (a b:Int) : a > b ∨ a < b ∨ a = b := by
   rw [lt_iff_pos]
   rw [show a > b ↔ b < a by rfl, lt_iff_pos]
-  sorry
+  have := trichotomous0 (a - b)
+  obtain h | h | h := this
+  · grind
+  · grind
+  · right
+    left
+    rw [← lt_iff_pos]
+    -- grind [lt_iff_lt_zero] why no work
+    rwa [← lt_iff_lt_zero] at h
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
-theorem Int.not_gt_and_lt (a b:Int) : ¬ (a > b ∧ a < b):= by sorry
+theorem Int.not_gt_and_lt (a b:Int) : ¬ (a > b ∧ a < b):= by
+  intro h
+  apply not_pos_neg (b - a)
+  rw [pos_iff_gt_0, neg_iff_lt_0, ← lt_iff_pos, ← lt_iff_lt_zero]
+  tauto
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
-theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by sorry
+theorem Int.not_gt_and_eq (a b:Int) : ¬ (a > b ∧ a = b):= by
+  rintro h
+  apply not_pos_zero (b - a)
+  rw [pos_iff_gt_0, ← lt_iff_pos]
+  grind
 
 /-- Lemma 4.1.11(f) (Order trichotomy) / Exercise 4.1.7 -/
-theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by sorry
+theorem Int.not_lt_and_eq (a b:Int) : ¬ (a < b ∧ a = b):= by
+  rintro h
+  apply not_neg_zero (a - b)
+  rw [neg_iff_lt_0, ← lt_iff_lt_zero]
+  grind
 
 /-- (Not from textbook) 0 is the only additive identity -/
 lemma Int.is_additive_identity_iff_eq_0 (a b : Int) : (a = a + b) ↔ b = 0 := by
@@ -591,7 +641,10 @@ theorem Int.ne_of_lt (a b:Int) : a < b → a ≠ b := by
   intro h; exact h.2
 
 @[grind]
-lemma Int.le_of_lt {n m:Int} (hnm: n < m) : n ≤ m := sorry
+lemma Int.le_of_lt {n m:Int} (hnm: n < m) : n ≤ m := by
+  rw [lt_iff_exists_positive_difference] at hnm
+  rcases hnm with ⟨ d, ⟨hd1, hd2⟩⟩
+  use d
 
 /-- If a > b and a < b then contradiction -/
 @[grind]
@@ -606,6 +659,28 @@ theorem Int.not_lt_of_gt (a b:Int) : a < b ∧ a > b → False := by
 
 theorem Int.not_lt_self {a: Int} (h : a < a) : False := by
   grind
+
+lemma Int.le_iff_lt_or_eq {a b: Int} : a ≤ b ↔ a < b ∨ a = b := by
+  constructor
+  · intro h
+    obtain ⟨ t, ht ⟩ := h
+    by_cases h : t = 0
+    right
+    rw [h] at ht
+    grind [Nat.cast_zero, add_zero]
+    left
+    constructor
+    exact ⟨ t, ht ⟩
+    rintro rfl
+    simp at ht
+    rw [cast_eq_0_iff_eq_0] at ht
+    exact h ht
+  · intro h
+    obtain h | rfl := h
+    exact le_of_lt h
+    use 0
+    simp
+
 
 /-- (Not from textbook) Int has the structure of a linear ordering. -/
 instance Int.instLinearOrder : LinearOrder Int where
@@ -630,9 +705,10 @@ instance Int.instLinearOrder : LinearOrder Int where
     rintro ⟨ h1, h2 ⟩
     rw [lt_iff, ← le_iff]
     grind
-
   le_antisymm := fun _ _ h1 h2 ↦ le_antisymm h1 h2
-  le_total := sorry
+  le_total a b := by
+    rw [le_iff_lt_or_eq, le_iff_lt_or_eq]
+    grind [trichotomous']
   toDecidableLE := decidableRel
 
 /-- Exercise 4.1.3 -/
@@ -675,7 +751,9 @@ theorem Int.sq_nonneg (n:Int) : 0 ≤ n*n := by
   · cases' h2 with h2 h3
     · have h3 : 0 < -n := neg_gt_neg h2
       have h4 : 0 ≤ -n := by grind
-      have h5 : 0 ≤ (-n) * (-n) := by grind [sq_nonneg_of_pos]
+      have h5 : 0 ≤ (-n) * (-n) := by
+        have := sq_nonneg_of_pos (-n) h4
+        grind
       grind [neg_mul, neg_neg]
     grind [mul_zero, le_refl]
 
@@ -698,16 +776,52 @@ abbrev Int.equivInt : Int ≃ ℤ where
     · grind
     · norm_cast
     )
-  invFun := sorry
-  left_inv n := sorry
-  right_inv n := sorry
+  invFun n := if n < 0 then 0 —— (n.natAbs) else n.natAbs —— 0
+  left_inv n := by
+    obtain ⟨ a, b, rfl ⟩ := eq_diff n
+    by_cases h : a < b <;> { simp [h]; grind }
+  right_inv n := by
+    by_cases h : n < 0
+    simp only [h, ↓reduceIte, Quotient.lift_mk, CharP.cast_eq_zero, zero_sub]
+    grind
+    simp [h]
+    grind
 
 /-- Not in textbook: equivalence preserves order and ring operations -/
 abbrev Int.equivInt_ordered_ring : Int ≃+*o ℤ where
   toEquiv := equivInt
-  map_add' := by sorry
-  map_mul' := by sorry
-  map_le_map_iff' := by sorry
+  map_add' x y := by
+    obtain ⟨ a, b, rfl ⟩ := eq_diff x
+    obtain ⟨ c, d, rfl ⟩ := eq_diff y
+    rw [add_eq]
+    simp
+    grind
+  map_mul' x y := by
+    obtain ⟨ a, b, rfl ⟩ := eq_diff x
+    obtain ⟨ c, d, rfl ⟩ := eq_diff y
+    rw [mul_eq]
+    simp
+    grind
+  map_le_map_iff' := by
+    intro x y
+    obtain ⟨ a, b, rfl ⟩ := eq_diff x
+    obtain ⟨ c, d, rfl ⟩ := eq_diff y
+    rw [le_iff]
+    simp only [Quotient.lift_mk]
+    constructor
+    intro h
+    use ((c:ℤ) - d + b - a).natAbs
+    rw [natCast_eq]
+    simp
+    zify
+    rw [abs_of_nonneg (by linarith)]
+    ring
+
+    intro h
+    obtain ⟨ t, ht ⟩ := h
+    rw [natCast_eq] at ht
+    simp at ht
+    grind
 
 
 end Section_4_1

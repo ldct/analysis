@@ -662,7 +662,6 @@ instance Int.instLinearOrder : LinearOrder Int where
       constructor
       · exact h.1
       · by_contra h2
-        grind [not_lt_self, lt_of_le_of_lt]
         exact not_lt_self (lt_of_le_of_lt h2 h)
     · rintro ⟨ h1, h2 ⟩
       grind

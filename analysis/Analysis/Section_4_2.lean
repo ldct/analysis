@@ -921,22 +921,75 @@ abbrev Rat.equivRat : Rat ≃ ℚ where
     simp
     apply Quotient.ind _ n
     intro ⟨ a, b, h ⟩
-    simp
+    simp only [Quotient.lift_mk]
+    simp only [Rat.cast_div, Rat.cast_intCast]
     rw [inverse_make a b h]
     exact div_eq_formalDiv a b h
   right_inv n := by
+    dsimp
+    rw [show (n:Rat) = Quotient.mk PreRat.instSetoid ⟨ n.num, n.den, by
+      have : n.den ≠ 0 := by simp [n.den_nz]
+      exact Int.ofNat_ne_zero.mpr this
+     ⟩ by
+      apply Quotient.sound
+      simp
+    ]
     simp
-    sorry
+    exact _root_.Rat.num_div_den n
+
 /-- Not in textbook: equivalence preserves order -/
 abbrev Rat.equivRat_order : Rat ≃o ℚ where
   toEquiv := equivRat
-  map_rel_iff' := by sorry
+  map_rel_iff' := by
+    intro x y
+    obtain ⟨a, b, hb, rfl⟩ := eq_diff x
+    obtain ⟨c, d, hd, rfl⟩ := eq_diff y
+    unfold equivRat
+    simp [-formalDiv_eq]
+    constructor
+    intro h
+    simp [hb, hd] at h
+    rw [← div_eq_formalDiv, ← div_eq_formalDiv]
+    norm_cast at *
+    exact hd
+    exact hb
+
+    intro h
+    simp [hb, hd]
+    rw [← div_eq_formalDiv, ← div_eq_formalDiv] at h
+    norm_cast at *
+    exact hd
+    exact hb
+
+-- example (a b c d : ℤ) : (a // b = c // d) := by
+--   simp [-Rat.formalDiv_eq]
 
 /-- Not in textbook: equivalence preserves ring operations -/
 abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
   toEquiv := equivRat
-  map_add' := by sorry
-  map_mul' := by sorry
+  map_add' := by
+    intro x y
+    obtain ⟨a, b, hb, rfl⟩ := eq_diff x
+    obtain ⟨c, d, hd, rfl⟩ := eq_diff y
+    rw [show a // b + c // d = (a*d+b*c) // (b*d) by
+      apply add_eq _ _ hb hd
+    ]
+    have : b * d ≠ 0 := by positivity
+    unfold equivRat
+    simp [hb, hd, this]
+    field_simp
+    ring
+  map_mul' := by
+    intro x y
+    obtain ⟨a, b, hb, rfl⟩ := eq_diff x
+    obtain ⟨c, d, hd, rfl⟩ := eq_diff y
+    rw [show a // b * c // d = (a*c) // (b*d) by
+      apply mul_eq _ _ hb hd
+    ]
+    have : b * d ≠ 0 := by positivity
+    unfold equivRat
+    simp [hb, hd, this]
+    field_simp
 
 /--
   (Not from textbook) The textbook rationals are isomorphic (as a field) to the Mathlib rationals.

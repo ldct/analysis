@@ -79,3 +79,5 @@ import Analysis.Misc.SI
 import Analysis.Misc.SIExamples
 import Analysis.Misc.FiniteChoice
 import Analysis.Misc.Probability
+
+#synth LinearOrder Rat

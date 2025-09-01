@@ -412,6 +412,13 @@ theorem Nat.trichotomous (a b:Nat) : a < b ∨ a = b ∨ a > b := by
     rw [add_succ, ← h2]
   grind
 
+def Nat.IsLe (a b: Nat) : Bool :=
+  match a, b with
+  | 0, _ => true
+  | a++, b => match (Nat.IsLe a b) with
+    | true => true
+    | false => false
+
 /--
   (Not from textbook) Establish the decidability of this order computably.  The portion of the
   proof involving decidability has been provided; the remaining sorries involve claims about the
@@ -445,6 +452,8 @@ def Nat.decLe : (a b : Nat) → Decidable (a ≤ b)
       exact le_of_lt h'
 
 instance Nat.decidableRel : DecidableRel (· ≤ · : Nat → Nat → Prop) := Nat.decLe
+
+example : Nat.zero++++++ ≤ Nat.zero++++++++ := by decide
 
 /-- (Not from textbook) Nat has the structure of a linear ordering. This allows for tactics
 such as `order` and `calc` to be applicable to the Chapter 2 natural numbers. -/

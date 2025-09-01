@@ -1,33 +1,34 @@
 import Mathlib
 
+namespace Section_4_2
 
+structure PreRat where
+  numerator : ℤ
+  denominator : ℤ
+  nonzero : denominator ≠ 0
 
-namespace Section_4_1
-
-structure PreInt where
-  minuend : ℕ
-  subtrahend : ℕ
-
-/-- Definition 4.1.1 -/
-instance PreInt.instSetoid : Setoid PreInt where
-  r a b := a.minuend + b.subtrahend = b.minuend + a.subtrahend
+/-- Exercise 4.2.1 -/
+instance PreRat.instSetoid : Setoid PreRat where
+  r a b := a.numerator * b.denominator = b.numerator * a.denominator
   iseqv := {
     refl := by
-      intro ⟨a, b⟩
-      rw [Nat.add_left_cancel_iff]
+      intro a
+      ring
     symm := by
-      intro ⟨a, b⟩ ⟨c, d⟩ h
-      linarith
+      intro x y h
+      rw [h]
     trans := by
-      intro ⟨ a,b ⟩ ⟨ c,d ⟩ ⟨ e,f ⟩ h1 h2
-      simp at h1 h2 ⊢
-      have h3 := congrArg₂ (· + ·) h1 h2
-      simp at h3
-      omega
+      intro x y z hxy hyz
+      suffices h : x.numerator * z.denominator * y.denominator= z.numerator * x.denominator * y.denominator
+      simp [y.nonzero] at h
+      exact h
+      rw [mul_assoc, mul_comm z.denominator, ← mul_assoc, hxy, mul_assoc, mul_comm x.denominator, ← mul_assoc, hyz]
+      ring
     }
 
-@[simp]
-theorem PreInt.equiv (a b c d:ℕ) : (⟨ a,b ⟩: PreInt) ≈ ⟨ c,d ⟩ ↔ a + d = c + b := by rfl
+example (a b:ℤ) (h: b ≠ 0)
+: Quot.mk ⇑PreRat.instSetoid { numerator := a, denominator := b, nonzero := h }
+= Quotient.mk PreRat.instSetoid { numerator := a, denominator := b, nonzero := h } := by rfl
 
 /--
 (a+b) —— (b+c) ≃ (a+d) —— (d+c)

@@ -24,14 +24,111 @@ Users of the companion who have completed the exercises in this section are welc
 
 -/
 
-/-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
-theorem Rat.between_int (x:ℚ) : ∃! n:ℤ, n ≤ x ∧ x < n+1 := by
-  have : x.num / x.den = x := num_div_den x
-  rw [← this]
+#check Nat.mod_add_div
+#check Int.ediv
+
+example :  ∀ (m k : ℤ), m % k + k * (m / k) = m := by
+  exact fun m k ↦ Int.emod_add_ediv m k
+
+lemma Nat.exists_div_mod'' (n q : ℕ) (hq: 0 < q) :
+    ∃ m r, 0 ≤ r ∧ r < q ∧ n = m * q + r := by
+  use n / q, n % q
+  and_intros
+  grind
+  exact mod_lt n hq
+  rw [div_add_mod']
+
+lemma Nat.exists_div_mod''' (n q : ℕ) (hq: 0 < q) :
+    ∃! m, n = m * q + (n % q) := by
   sorry
 
+
+lemma Nat.exists_div_mod (n q : ℕ) (hq: 0 < q) :
+    ∃ (mr: Nat × Nat), 0 ≤ mr.2 ∧ mr.2 < q ∧ n = mr.1 * q + mr.2 := by
+  use (n / q, n % q)
+  and_intros
+  grind
+  exact mod_lt n hq
+  rw [div_add_mod']
+
+lemma Nat.exists_div_mod' (n q : ℕ) (hq: 0 < q) :
+    ∃! (mr: Nat × Nat), 0 ≤ mr.2 ∧ mr.2 < q ∧ n = mr.1 * q + mr.2 := by
+  use (n / q, n % q)
+  and_intros
+  grind
+  exact mod_lt n hq
+  rw [div_add_mod']
+
+  rintro ⟨ m, r ⟩ ⟨ _, h2, h3 ⟩
+  simp at h2 h3
+
+  obtain rfl := show  m = n / q by
+    have : ¬(m < n/q) := by grind [Nat.lt_div_iff_mul_lt]
+    have : ¬(n/q < m) := by grind [Nat.div_lt_iff_lt_mul]
+    grind
+
+  ext <;> simp
+  rw [h3]
+  simp
+  grind [mod_eq_of_lt]
+
+/-- Proposition 4.4.1 (Interspersing of integers by rationals) / Exercise 4.4.1 -/
+theorem Rat.between_int (x:ℚ) : ∃! n:ℤ, n ≤ x ∧ x < n+1 := by
+  by_cases h : 0 < x
+  have : ∃ p q : ℕ, x = p / q ∧ q ≠ 0 := by
+    use x.num.toNat, x.den
+    have : (x.num.toNat : ℚ) = x.num := by
+      norm_cast
+      exact (Int.eq_natCast_toNat.mpr (by positivity)).symm
+    rw [this]
+    constructor
+    exact Eq.symm (num_div_den x)
+    exact x.den_nz
+  obtain ⟨ p, q, h1, h2 ⟩ := this
+  have := Nat.exists_div_mod' p q (by positivity)
+  obtain ⟨ ⟨ m, r ⟩, ⟨  h3, h4, h5 ⟩, h6 ⟩  := this
+  use m
+  simp at *
+  and_intros
+  norm_cast
+  rw [h1, h5]
+  push_cast
+  rw [show ((m:ℚ) * q + r) / q = ((m:ℚ) * q) / q + r / q by ring]
+  rw [show ((m:ℚ) * q) / q = m by field_simp]
+  simp
+  positivity
+  rw [h1, h5]
+  push_cast
+  rw [show ((m:ℚ) * q + r) / q = ((m:ℚ) * q) / q + r / q by ring]
+  rw [show ((m:ℚ) * q) / q = m by field_simp]
+  simp
+  rw [div_lt_one_iff]
+  left
+  and_intros
+  norm_cast
+  grind
+  norm_cast
+
+  by_contra nu
+  simp at nu
+  obtain ⟨ n, hn1, hn2, hn3 ⟩ := nu
+  repeat sorry
+
+
+
 theorem Nat.exists_gt (x:ℚ) : ∃ n:ℕ, n > x := by
-  sorry
+  have := Rat.between_int x
+  obtain ⟨ n, ⟨ h1, h2 ⟩, h3 ⟩ := this
+  by_cases h : 0 < x
+  · have : 0 < (n:ℚ) + 1 := by linarith
+    norm_cast at this
+    lift n to ℕ using (by omega)
+    norm_cast at *
+    use (n + 1)
+
+  · use 1
+    norm_cast
+    linarith
 
 /-- Proposition 4.4.3 (Interspersing of rationals) -/
 theorem Rat.exists_between_rat {x y:ℚ} (h: x < y) : ∃ z:ℚ, x < z ∧ z < y := by

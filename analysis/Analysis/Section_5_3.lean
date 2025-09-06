@@ -733,6 +733,24 @@ example : ¬ ((fun (n:ℕ) ↦ (10:ℚ)^(n)):Sequence).IsBounded := by
 
   linarith
 
+lemma reverse_triangle_inequality (u v : ℝ) : |u - v| ≥ |(|u| - |v|)| := by exact  abs_abs_sub_abs_le u v
+
+
+lemma Rat.CloseSeq_of_coe_from_coe (ε: ℚ) (a b: ℕ → ℚ) (n₀: ℕ) :
+  ε.CloseSeq ((a : Sequence).from n₀) ((b : Sequence).from n₀)
+↔ ∀ n ≥ n₀, ε.Close (a n) (b n) := by
+  constructor
+  intro h n hn
+  specialize h n
+  simp [hn] at h
+  exact h
+
+  intro h n h1 h2
+  simp at *
+  lift n to ℕ using (by grind)
+  grind
+
+
 /-- Lemma 5.3.14 -/
 theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
     ∃ a:ℕ → ℚ, (a:Sequence).IsCauchy ∧ BoundedAwayZero a ∧ x = LIM a := by
@@ -744,9 +762,30 @@ theorem Real.boundedAwayZero_of_nonzero {x:Real} (hx: x ≠ 0) :
   choose ε hε hx using hx
   choose N hb' using (Sequence.IsCauchy.coe _).mp hb _ (half_pos hε)
   choose n₀ hn₀ hx using hx N
-  have how : ∀ j ≥ N, |b j| ≥ ε/2 := by sorry
+  have how : ∀ j ≥ N, |b j| ≥ ε/2 := by
+    -- this proof uses the reverse triangle inequality
+    intro j hj
+    rw [ge_iff_le]
+    specialize hb' n₀ hn₀ j hj
+    unfold Section_4_3.dist at hb'
+    have : |(b n₀ - (b n₀ - b j))| ≥ |(|b n₀| - |b n₀ - b j|)| := abs_abs_sub_abs_le (b n₀) (b n₀ - b j)
+    have hx' : |b n₀| ≥ ε := by linarith
+    grw [hx'] at this
+    grw [hb'] at this
+    rw [abs_of_nonneg (show 0 ≤ ε - ε / 2 by linarith)] at this
+    ring_nf at this
+    all_goals linarith
+
   set a : ℕ → ℚ := fun n ↦ if n < n₀ then (ε/2) else b n
-  have not_hard : Sequence.Equiv a b := by sorry
+  have not_hard : Sequence.Equiv a b := by
+    intro ε hε
+    use n₀
+    rw [Rat.CloseSeq_of_coe_from_coe]
+    intro n hn
+    unfold a
+    unfold Rat.Close
+    simp [show ¬ ( n < n₀) by omega]
+    positivity
   have ha : (a:Sequence).IsCauchy := (Sequence.IsCauchy.equiv not_hard).mpr hb
   refine ⟨ a, ha, ?_, by rw [(LIM_eq_LIM ha hb).mpr not_hard] ⟩
   rw [bounded_away_zero_def]

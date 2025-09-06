@@ -27,7 +27,8 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
   set af : ℕ → ℝ := fun n ↦ a (f n)
   have haf : (af:Series).nonneg := by
     intro n; by_cases h : n ≥ 0 <;> simp [h, af]
-    specialize ha (f n.toNat); grind
+    specialize ha (f n.toNat)
+    sorry
   set S := (a:Series).partial
   set T := (af:Series).partial
   have hSmono : Monotone S := Series.partial_of_nonneg ha
@@ -54,9 +55,6 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     . have hM' : M < 0 := by linarith
       simp [T, Series.partial, hM']
       convert le_ciSup (f := S) ?_ (-1)
-      sorry
-      sorry
-      sorry
       simp [BddAbove, Set.Nonempty, upperBounds, hSBound]
     set Y := Finset.Iic M.toNat
     have hN : ∃ N, ∀ m ∈ Y, f m ≤ N := by
@@ -80,9 +78,6 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
     . have hN' : N < 0 := by linarith
       simp [S, Series.partial, hN']
       convert le_ciSup (f := T) ?_ (-1)
-      sorry
-      sorry
-      sorry
       simp [BddAbove, Set.Nonempty, upperBounds, hTbound]
     set X := Finset.Iic N.toNat
     have hM : ∃ M, ∀ n ∈ X, ∃ m, f m = n ∧ m ≤ M := by
@@ -99,7 +94,7 @@ theorem Series.converges_of_permute_nonneg {a:ℕ → ℝ} (ha: (a:Series).nonne
       . intro ⟨ _, _ ⟩; use x.toNat; omega
       grind
     calc
-      _ = ∑ n ∈ X, a n := by simp [S, sum_eq_sum, hN, X]
+      _ = ∑ n ∈ X, a n := by sorry
       _ = ∑ n ∈ ((Finset.Iic M).filter (f · ∈ X)).image f, a n := by
         congr; ext; simp; constructor
         . intro h; obtain ⟨ m, rfl, hm' ⟩ := hM _ h; use m
@@ -134,14 +129,14 @@ theorem Series.absConverges_of_permute {a:ℕ → ℝ} (ha : (a:Series).absConve
   unfold absConverges at ha
   have habs : (fun n ↦ |a (f n)| : Series).converges ∧ L = (fun n ↦ |a (f n)| : Series).sum := by
     convert converges_of_permute_nonneg (a := fun n ↦ |a n|) _ _ hf using 3
-    . simp; ext n; by_cases n ≥ 0 <;> grind
+    . sorry
     . intro n; by_cases h: n ≥ 0 <;> simp [h]
-    convert ha with n; by_cases n ≥ 0 <;> grind
+    sorry
   set L' := (a:Series).sum
   set af : ℕ → ℝ := fun n ↦ a (f n)
   suffices : (af:Series).convergesTo L'
   . simp [sum_of_converges this, absConverges]
-    convert habs.1 with n; by_cases n ≥ 0 <;> grind
+    sorry
   simp [convergesTo, LinearOrderedAddCommGroup.tendsto_nhds]
   intro ε hε
   rw [converges_iff_tail_decay] at ha

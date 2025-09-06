@@ -86,7 +86,6 @@ example : threeFourths = threeFourths := by
 def Rat.formalDiv (a b:ℤ) : Rat :=
   Quotient.mk PreRat.instSetoid (if h:b ≠ 0 then ⟨ a,b,h ⟩ else ⟨ 0, 1, by decide ⟩)
 
-@[simp]
 lemma Rat.formalDiv_eq (a b : ℤ): Rat.formalDiv a b = Quotient.mk PreRat.instSetoid (if h:b ≠ 0 then ⟨ a,b,h ⟩ else ⟨ 0, 1, by decide ⟩) := by rfl
 
 infix:100 " // " => Rat.formalDiv
@@ -101,7 +100,7 @@ lemma Rat.inverse_make
 /-- Definition 4.2.1 (Rationals) -/
 @[grind]
 theorem Rat.eq (a c:ℤ) {b d:ℤ} (hb: b ≠ 0) (hd: d ≠ 0): a // b = c // d ↔ a * d = c * b := by
-  simp [hb, hd, Setoid.r]
+  simp [formalDiv_eq, hb, hd, Setoid.r]
 
 /-- Definition 4.2.1 (Rationals) -/
 theorem Rat.eq_diff (n:Rat) : ∃ a b, b ≠ 0 ∧ n = a // b := by
@@ -127,7 +126,7 @@ instance Rat.decidableEq : DecidableEq Rat := by
 instance Rat.add_inst : Add Rat where
   add := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*d+b*c) // (b*d)) (by
     intro ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ⟨ a', b', h1' ⟩ ⟨ c', d', h2' ⟩ h3 h4
-    simp_all [Setoid.r]
+    simp_all [Setoid.r, formalDiv_eq]
     grind
   )
 
@@ -142,7 +141,7 @@ grind_pattern Rat.add_eq => (a // b) + (c // d)
 instance Rat.mul_inst : Mul Rat where
   mul := Quotient.lift₂ (fun ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ↦ (a*c) // (b*d)) (by
     intro ⟨ a, b, h1 ⟩ ⟨ c, d, h2 ⟩ ⟨ a', b', h1' ⟩ ⟨ c', d', h2' ⟩ h3 h4
-    simp [Setoid.r, h1, h2, h1', h2'] at *
+    simp [formalDiv_eq, Setoid.r, h1, h2, h1', h2'] at *
     grind
   )
 
@@ -157,7 +156,7 @@ grind_pattern Rat.mul_eq => (a // b) * (c // d)
 instance Rat.neg_inst : Neg Rat where
   neg := Quotient.lift (fun ⟨ a, b, h1 ⟩ ↦ (-a) // b) (by
     intro ⟨ a, b, h1 ⟩ ⟨ a', b', h2 ⟩ h3
-    simp [Setoid.r, h1, h2] at *
+    simp [formalDiv_eq, Setoid.r, h1, h2] at *
     exact h3
   )
 
@@ -903,7 +902,6 @@ theorem Rat.mul_lt_mul_right_of_neg (x y z:Rat) (hxy: x < y) (hz: z.IsNeg) : x *
   rw [isNeg_iff_isPos, show -z = 0 - z by ring, ← lt_iff_isPos] at hz
   exact mul_lt_mul_of_neg_right hxy hz
 
-#check Rat.inverse_make
 /--
   Not in textbook: create an equivalence between Rat and ℚ. This requires some familiarity with
   the API for Mathlib's version of the rationals.
@@ -937,6 +935,9 @@ abbrev Rat.equivRat : Rat ≃ ℚ where
     simp
     exact _root_.Rat.num_div_den n
 
+lemma Rat.equivRat_eq (a b : ℤ) (hb: b ≠ 0) : equivRat (a // b) = (a : ℚ) / (b : ℚ) := by
+  simp [formalDiv_eq, hb]
+
 /-- Not in textbook: equivalence preserves order -/
 abbrev Rat.equivRat_order : Rat ≃o ℚ where
   toEquiv := equivRat
@@ -944,25 +945,8 @@ abbrev Rat.equivRat_order : Rat ≃o ℚ where
     intro x y
     obtain ⟨a, b, hb, rfl⟩ := eq_diff x
     obtain ⟨c, d, hd, rfl⟩ := eq_diff y
-    unfold equivRat
-    simp [-formalDiv_eq]
-    constructor
-    intro h
-    simp [hb, hd] at h
-    rw [← div_eq_formalDiv, ← div_eq_formalDiv]
-    norm_cast at *
-    exact hd
-    exact hb
-
-    intro h
-    simp [hb, hd]
-    rw [← div_eq_formalDiv, ← div_eq_formalDiv] at h
-    norm_cast at *
-    exact hd
-    exact hb
-
--- example (a b c d : ℤ) : (a // b = c // d) := by
---   simp [-Rat.formalDiv_eq]
+    rw [equivRat_eq _ _ hb, equivRat_eq _ _ hd, ← div_eq_formalDiv _ _ hb, ← div_eq_formalDiv _ _ hd]
+    norm_cast
 
 /-- Not in textbook: equivalence preserves ring operations -/
 abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
@@ -976,7 +960,7 @@ abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
     ]
     have : b * d ≠ 0 := by positivity
     unfold equivRat
-    simp [hb, hd, this]
+    simp [formalDiv_eq, hb, hd, this]
     field_simp
     ring
   map_mul' := by
@@ -988,7 +972,7 @@ abbrev Rat.equivRat_ring : Rat ≃+* ℚ where
     ]
     have : b * d ≠ 0 := by positivity
     unfold equivRat
-    simp [hb, hd, this]
+    simp [formalDiv_eq, hb, hd, this]
     field_simp
 
 /--

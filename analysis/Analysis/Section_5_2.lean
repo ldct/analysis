@@ -36,6 +36,7 @@ namespace Chapter5
 lemma Rat.closeSeq_def (ε: ℚ) (a b: Sequence) :
     ε.CloseSeq a b ↔ ∀ n, n ≥ a.n₀ → n ≥ b.n₀ → ε.Close (a n) (b n) := by rfl
 
+-- todo rename
 theorem Rat.Close_of_coe_coe (ε: ℚ) (a b: ℕ → ℚ)
   : ε.CloseSeq (a:Sequence) (b:Sequence) ↔ ∀ n, ε.Close (a n) (b n) := by
   rw [Rat.closeSeq_def]
@@ -43,8 +44,7 @@ theorem Rat.Close_of_coe_coe (ε: ℚ) (a b: ℕ → ℚ)
   intro h
   intro n
   specialize h n
-  simp at h
-  exact h
+  grind [Sequence.n0_coe, Nat.cast_nonneg, Sequence.eval_coe_at_int]
 
   intro h n h1 h2
   simp
